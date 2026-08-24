@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>RouteGuard AI | Command Center</title>
+
+    <!-- Dashboard CSS -->
+    <link rel="stylesheet" href="command.css">
+
+    <!-- Leaflet Map CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+</head>
+
+
+<body>
+
+<div class="app">
+
+
+    <!-- =========================
+         SIDEBAR
+    ========================== -->
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            RouteGuard <span>AI</span>
+        </div>
+
+        <div class="ai-status">
+            <span></span>
+            AI ENGINE ONLINE
+        </div>
+
+
+        <nav>
+
+            <button class="nav-item active">
+                🗺️
+                <span>Command Center</span>
+            </button>
+
+            <button class="nav-item">
+                🚚
+                <span>Fleet Monitoring</span>
+            </button>
+
+            <button class="nav-item">
+                🧠
+                <span>Risk Intelligence</span>
+            </button>
+
+            <button class="nav-item">
+                ⚡
+                <span>Route Optimization</span>
+            </button>
+
+            <button class="nav-item">
+                🌧️
+                <span>Disaster Watch</span>
+            </button>
+
+        </nav>
+
+
+        <div class="sidebar-bottom">
+
+            <div class="mini-status">
+
+                <small>
+                    NETWORK STATUS
+                </small>
+
+                <strong>
+                    All systems operational
+                </strong>
+
+            </div>
+
+
+            <button class="logout">
+                ← Exit Command Center
+            </button>
+
+        </div>
+
+    </aside>
+
+
+
+    <!-- =========================
+         MAIN CONTENT
+    ========================== -->
+
+    <main class="main">
+
+
+        <!-- TOP BAR -->
+
+        <header class="topbar">
+
+            <div>
+
+                <p class="eyebrow">
+                    LIVE LOGISTICS NETWORK
+                </p>
+
+                <h1>
+                    AI Command Center
+                </h1>
+
+            </div>
+
+
+            <div class="top-actions">
+
+                <div class="live">
+
+                    <span></span>
+
+                    LIVE
+
+                </div>
+
+
+                <div class="operator">
+
+                    <div class="avatar">
+                        T
+                    </div>
+
+                    <div>
+
+                        <strong>
+                            Operator
+                        </strong>
+
+                        <small>
+                            Control Access
+                        </small>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </header>
+
+
+
+        <!-- =========================
+             STATISTICS
+        ========================== -->
+
+        <section class="stats">
+
+
+            <div class="stat-card">
+
+                <span>
+                    🚚
+                </span>
+
+                <div>
+
+                    <small>
+                        Active Vehicles
+                    </small>
+
+                    <strong>
+                        128
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span>
+                    🗺️
+                </span>
+
+                <div>
+
+                    <small>
+                        Routes Monitored
+                    </small>
+
+                    <strong>
+                        46
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card risk">
+
+                <span>
+                    ⚠️
+                </span>
+
+                <div>
+
+                    <small>
+                        Risk Alerts
+                    </small>
+
+                    <strong>
+                        07
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <div class="stat-card">
+
+                <span>
+                    🤖
+                </span>
+
+                <div>
+
+                    <small>
+                        AI Predictions
+                    </small>
+
+                    <strong>
+                        312
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+        </section>
+
+
+
+        <!-- =========================
+             ROUTE SEARCH
+        ========================== -->
+
+        <section class="route-search">
+
+
+            <div class="field">
+
+                <label>
+                    ORIGIN
+                </label>
+
+                <input
+                    id="origin"
+                    type="text"
+                    value="Delhi"
+                >
+
+            </div>
+
+
+            <div class="arrow">
+                →
+            </div>
+
+
+            <div class="field">
+
+                <label>
+                    DESTINATION
+                </label>
+
+                <input
+                    id="destination"
+                    type="text"
+                    value="Lucknow"
+                >
+
+            </div>
+
+
+            <button id="analyzeBtn">
+
+                🤖 Analyze Route
+
+            </button>
+
+
+        </section>
+
+
+
+        <!-- =========================
+             WORKSPACE
+        ========================== -->
+
+        <section class="workspace">
+
+
+            <!-- =====================
+                 REAL MAP PANEL
+            ====================== -->
+
+            <div class="map-panel">
+
+
+                <div class="panel-title">
+
+                    <div>
+
+                        <h2>
+                            Live Route Network
+                        </h2>
+
+                        <p>
+                            Real-time logistics monitoring
+                        </p>
+
+                    </div>
+
+
+                    <span class="map-live">
+                        ● LIVE TRACKING
+                    </span>
+
+                </div>
+
+
+                <!-- REAL LEAFLET MAP -->
+
+                <div
+                    id="realMap"
+                    class="map"
+                ></div>
+
+
+            </div>
+
+
+
+            <!-- =====================
+                 AI INTELLIGENCE PANEL
+            ====================== -->
+
+            <aside class="ai-panel">
+
+
+                <div class="ai-heading">
+
+                    <div>
+
+                        <p class="eyebrow">
+                            INTELLIGENCE ENGINE
+                        </p>
+
+                        <h2>
+                            AI Route Analysis
+                        </h2>
+
+                    </div>
+
+
+                    <div class="ai-icon">
+                        AI
+                    </div>
+
+                </div>
+
+
+
+                <!-- RISK CARD -->
+
+                <div class="risk-card">
+
+                    <div class="risk-top">
+
+                        <span>
+                            Disruption Risk
+                        </span>
+
+                        <strong id="riskScore">
+                            78%
+                        </strong>
+
+                    </div>
+
+
+                    <div class="risk-bar">
+
+                        <div id="riskBar"></div>
+
+                    </div>
+
+
+                    <p id="riskMessage">
+
+                        Elevated disruption probability
+                        detected on the current route.
+
+                    </p>
+
+                </div>
+
+
+
+                <!-- AI RECOMMENDATION -->
+
+                <div class="recommendation">
+
+
+                    <div class="rec-icon">
+                        🚚
+                    </div>
+
+
+                    <div>
+
+                        <small>
+                            AI RECOMMENDATION
+                        </small>
+
+                        <h3 id="recommendedRoute">
+                            Alternate Route B
+                        </h3>
+
+                        <p>
+
+                            Estimated delay:
+
+                            <strong id="delayValue">
+                                +35 min
+                            </strong>
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+
+
+                <!-- WHY THIS ROUTE -->
+
+                <button
+                    id="whyRoute"
+                    class="why-btn"
+                >
+
+                    🧠 Why this route?
+
+                </button>
+
+
+
+                <!-- WHAT IF -->
+
+                <div class="what-if">
+
+
+                    <div>
+
+                        <small>
+                            WHAT-IF SIMULATOR
+                        </small>
+
+                        <h3>
+                            What if NH-27 closes?
+                        </h3>
+
+                    </div>
+
+
+                    <button id="simulateBtn">
+
+                        Simulate
+
+                    </button>
+
+                </div>
+
+
+
+                <!-- SIMULATION RESULT -->
+
+                <div
+                    id="simulationResult"
+                    class="simulation hidden"
+                >
+
+                    <strong>
+                        Scenario Analysis
+                    </strong>
+
+
+                    <p>
+
+                        ETA impact:
+
+                        <b>
+                            +45 min
+                        </b>
+
+                    </p>
+
+
+                    <p>
+
+                        Fuel impact:
+
+                        <b>
+                            +8%
+                        </b>
+
+                    </p>
+
+
+                    <p>
+
+                        AI action:
+
+                        <b>
+                            Switch to Route B
+                        </b>
+
+                    </p>
+
+                </div>
+
+
+
+                <!-- AI EXPLANATION -->
+
+                <div
+                    id="aiExplanation"
+                    class="explanation hidden"
+                >
+
+                    <strong>
+                        Why Route B?
+                    </strong>
+
+
+                    <p>
+                        ✓ Lower traffic exposure
+                    </p>
+
+                    <p>
+                        ✓ Avoids disruption zone
+                    </p>
+
+                    <p>
+                        ✓ Lower disruption probability
+                    </p>
+
+                    <p>
+                        ✓ Better estimated arrival time
+                    </p>
+
+
+                    <div class="confidence">
+
+                        AI confidence:
+
+                        <b>
+                            91%
+                        </b>
+
+                    </div>
+
+                </div>
+
+
+            </aside>
+
+
+        </section>
+
+
+
+        <!-- =========================
+             LIVE ALERTS
+        ========================== -->
+
+        <section class="alerts">
+
+
+            <div class="panel-title">
+
+                <div>
+
+                    <h2>
+                        Live Disruption Alerts
+                    </h2>
+
+                    <p>
+                        Events requiring attention
+                    </p>
+
+                </div>
+
+
+                <span class="alert-count">
+                    07 ACTIVE
+                </span>
+
+            </div>
+
+
+
+            <div class="alert-list">
+
+
+                <div class="alert">
+
+                    <span class="alert-icon">
+                        🌧️
+                    </span>
+
+
+                    <div>
+
+                        <strong>
+                            Flood Risk Detected
+                        </strong>
+
+                        <p>
+                            NH-27 · Near Kanpur
+                        </p>
+
+                    </div>
+
+
+                    <b class="high">
+                        HIGH
+                    </b>
+
+                </div>
+
+
+
+                <div class="alert">
+
+                    <span class="alert-icon">
+                        🚧
+                    </span>
+
+
+                    <div>
+
+                        <strong>
+                            Road Block Reported
+                        </strong>
+
+                        <p>
+                            NH-19 · Prayagraj Sector
+                        </p>
+
+                    </div>
+
+
+                    <b class="medium">
+                        MEDIUM
+                    </b>
+
+                </div>
+
+
+            </div>
+
+        </section>
+
+
+    </main>
+
+</div>
+
+
+
+<!-- =========================
+     LEAFLET MAP JAVASCRIPT
+========================= -->
+
+<script
+    src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+</script>
+
+
+<!-- Our JavaScript -->
+
+<script src="command.js"></script>
+
+
+</body>
+
+</html>

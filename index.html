@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>RouteGuard AI | Control Room</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="control-room">
+
+        <!-- LEFT: AI INTELLIGENCE -->
+        <section class="intelligence">
+
+            <div class="brand">
+                RouteGuard <span>AI</span>
+            </div>
+
+            <div class="live-status">
+                <span></span>
+                AI RISK ENGINE ACTIVE
+            </div>
+
+            <div class="hero-text">
+                <p class="eyebrow">SMART LOGISTICS & ACCESSIBILITY</p>
+
+                <h1>
+                    Predict the road.<br>
+                    <span>Protect the journey.</span>
+                </h1>
+
+                <p>
+                    AI-powered logistics intelligence for real-time
+                    disruption prediction, route optimization and
+                    fleet monitoring.
+                </p>
+            </div>
+
+
+            <!-- MAP -->
+            <div class="map-preview">
+
+                <div class="map-grid"></div>
+
+                <div class="road road-one"></div>
+                <div class="road road-two"></div>
+                <div class="road road-three"></div>
+
+                <div class="route safe-route"></div>
+                <div class="route danger-route"></div>
+
+                <div class="location delhi">
+                    <span></span>
+                    Delhi
+                </div>
+
+                <div class="location lucknow">
+                    <span></span>
+                    Lucknow
+                </div>
+
+                <div class="truck truck-one">🚚</div>
+                <div class="truck truck-two">🚛</div>
+
+                <div class="danger-zone">
+                    ⚠
+                    <small>NH-27<br>RISK</small>
+                </div>
+
+                <div class="route-card">
+
+                    <div>
+                        <small>AI ROUTE RECOMMENDATION</small>
+                        <strong>Alternate Route B</strong>
+                    </div>
+
+                    <div class="delay">
+                        +35 min
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- SYSTEM STATUS -->
+            <div class="system-panel">
+
+                <div class="system-title">
+                    <span>LIVE SYSTEM STATUS</span>
+                    <small>Updated now</small>
+                </div>
+
+                <div class="systems">
+
+                    <div>
+                        <span class="online"></span>
+                        Traffic Intelligence
+                    </div>
+
+                    <div>
+                        <span class="online"></span>
+                        Weather Intelligence
+                    </div>
+
+                    <div>
+                        <span class="online"></span>
+                        Route Engine
+                    </div>
+
+                    <div>
+                        <span class="online"></span>
+                        Risk Prediction
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- RIGHT: LOGIN -->
+        <section class="access">
+
+            <div class="access-box">
+
+                <div class="access-header">
+
+                    <div class="shield">⌁</div>
+
+                    <div>
+                        <p class="eyebrow">SECURE ACCESS</p>
+                        <h2>Welcome, Operator</h2>
+                        <p>Enter the RouteGuard command center.</p>
+                    </div>
+
+                </div>
+
+
+                <!-- LOGIN / REGISTER -->
+                <div class="tabs">
+
+                    <button id="loginTab" class="active">
+                        Login
+                    </button>
+
+                    <button id="registerTab">
+                        Register
+                    </button>
+
+                </div>
+
+
+                <form id="authForm">
+
+                    <div id="nameField" class="hidden">
+
+                        <label>Full Name</label>
+
+                        <input
+                            type="text"
+                            placeholder="Enter your full name"
+                        >
+
+                    </div>
+
+
+                    <label>Email Address</label>
+
+                    <input
+                        type="email"
+                        placeholder="operator@example.com"
+                        required
+                    >
+
+
+                    <label>Password</label>
+
+                    <input
+                        type="password"
+                        placeholder="Enter your password"
+                        required
+                    >
+
+
+                    <div class="role-section hidden" id="roleSection">
+
+                        <label>Operator Role</label>
+
+                        <select>
+
+                            <option>Fleet Manager</option>
+                            <option>Logistics Operator</option>
+                            <option>Driver</option>
+                            <option>Administrator</option>
+
+                        </select>
+
+                    </div>
+
+
+                    <button type="submit" class="enter-btn">
+
+                        <span>ENTER COMMAND CENTER</span>
+                        →
+
+                    </button>
+
+                </form>
+
+
+                <div class="divider">
+                    <span>or</span>
+                </div>
+
+
+                <button class="google-btn">
+                    Continue with Google
+                </button>
+
+
+                <p class="secure-note">
+                    🔒 Your logistics data is securely protected.
+                </p>
+
+            </div>
+
+
+            <footer>
+                RouteGuard AI • Smart Logistics Intelligence
+            </footer>
+
+        </section>
+
+    </div>
+
+
+    <script src="script.js"></script>
+
+</body>
+
+</html>
