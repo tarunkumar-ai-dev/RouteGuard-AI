@@ -1,10 +1,27 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, send_from_directory
 from flask_cors import CORS
 import requests
 from datetime import datetime
 
 app = Flask(__name__)
 CORS(app)
+
+import os
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+@app.route("/")
+def home():
+    return send_from_directory(BASE_DIR, "index.html")
+
+@app.route("/<path:filename>")
+def frontend_files(filename):
+    file_path = os.path.join(BASE_DIR, filename)
+
+    if os.path.isfile(file_path):
+        return send_from_directory(BASE_DIR, filename)
+
+    return jsonify({"error": "File not found"}), 404
 
 vehicles = {}
 
