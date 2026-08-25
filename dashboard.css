@@ -1408,3 +1408,64 @@ nav {
         display: none;
     }
 }
+
+/* =====================================
+   ALTERNATE REAL ROUTES
+===================================== */
+
+#alternateRoutes {
+    border-top: 1px solid #192c40;
+    padding: 14px 18px 16px;
+}
+
+.alternate-title {
+    color: var(--green);
+    font-size: 7px;
+    font-weight: 700;
+    letter-spacing: 1.3px;
+    margin-bottom: 9px;
+}
+
+.alternate-route {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 10px;
+
+    padding: 9px 10px;
+    margin-top: 6px;
+
+    border: 1px solid #203348;
+    border-radius: 7px;
+
+    color: #b9c8d6;
+    background: #07111d;
+
+    cursor: pointer;
+    text-align: left;
+}
+
+.alternate-route:hover {
+    border-color: #42617b;
+}
+
+.alternate-route.selected {
+    border-color: var(--green);
+    background: rgba(0, 208, 132, 0.06);
+}
+
+.alternate-route span {
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.alternate-route strong {
+    color: white;
+    font-size: 9px;
+}
+
+.alternate-route small {
+    color: var(--muted);
+    font-size: 8px;
+}
