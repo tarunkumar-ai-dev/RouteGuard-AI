@@ -6,16 +6,28 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
+# ==============================
+# FRONTEND
+# ==============================
+# Serve the existing frontend from the repository root.
+# server.py is inside /backend, while index.html, style.css,
+# and script.js are in the repository root.
+
 import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-@app.route("/")
+@app.route("/", methods=["GET"])
 def home():
     return send_from_directory(BASE_DIR, "index.html")
 
-@app.route("/<path:filename>")
+
+@app.route("/<path:filename>", methods=["GET"])
 def frontend_files(filename):
+    # Never intercept API requests.
+    if filename.startswith("api/"):
+        return jsonify({"error": "API endpoint not found"}), 404
+
     file_path = os.path.join(BASE_DIR, filename)
 
     if os.path.isfile(file_path):
@@ -85,6 +97,146 @@ def weather():
             "details": str(error)
         }), 502
 
+
+# ==============================
+# REAL ROUTE PLANNING
+# OpenStreetMap road network + OSRM
+# ==============================
+
+# Verified city-center coordinates used only when the user enters
+# one of these city names. The route itself is calculated from the
+# live road network by OSRM; no fake distance/time is inserted.
+CITY_COORDINATES = {
+    "delhi": (28.6139, 77.2090),
+    "new delhi": (28.6139, 77.2090),
+    "lucknow": (26.8467, 80.9462),
+    "kanpur": (26.4499, 80.3319),
+    "agra": (27.1767, 78.0081),
+    "jaipur": (26.9124, 75.7873),
+    "chandigarh": (30.7333, 76.7794),
+    "dehradun": (30.3165, 78.0322),
+    "varanasi": (25.3176, 82.9739),
+    "prayagraj": (25.4358, 81.8463),
+    "patna": (25.5941, 85.1376),
+    "gurugram": (28.4595, 77.0266),
+    "noida": (28.5355, 77.3910)
+}
+
+
+def resolve_location(name):
+    if not name:
+        return None
+
+    key = name.strip().lower()
+
+    coords = CITY_COORDINATES.get(key)
+
+    if coords is None:
+        return None
+
+    return {
+        "name": name.strip(),
+        "latitude": coords[0],
+        "longitude": coords[1]
+    }
+
+
+@app.route("/api/route", methods=["GET"])
+def calculate_route():
+
+    origin = request.args.get("origin")
+    destination = request.args.get("destination")
+
+    if not origin or not destination:
+        return jsonify({
+            "error": "origin and destination are required."
+        }), 400
+
+    start = resolve_location(origin)
+    end = resolve_location(destination)
+
+    if not start:
+        return jsonify({
+            "error": f"Location not supported yet: {origin}",
+            "supported_locations": sorted(CITY_COORDINATES.keys())
+        }), 400
+
+    if not end:
+        return jsonify({
+            "error": f"Location not supported yet: {destination}",
+            "supported_locations": sorted(CITY_COORDINATES.keys())
+        }), 400
+
+    coordinates = (
+        f"{start['longitude']},{start['latitude']};"
+        f"{end['longitude']},{end['latitude']}"
+    )
+
+    osrm_url = (
+        "https://router.project-osrm.org"
+        f"/route/v1/driving/{coordinates}"
+    )
+
+    params = {
+        "alternatives": "true",
+        "overview": "full",
+        "geometries": "geojson",
+        "steps": "false"
+    }
+
+    try:
+        response = requests.get(
+            osrm_url,
+            params=params,
+            timeout=20,
+            headers={
+                "User-Agent": "RouteGuardAI/1.0"
+            }
+        )
+        response.raise_for_status()
+
+        route_data = response.json()
+
+    except requests.RequestException as error:
+        return jsonify({
+            "error": "Real routing service unavailable.",
+            "details": str(error)
+        }), 502
+
+    if route_data.get("code") != "Ok":
+        return jsonify({
+            "error": "No road route found.",
+            "routing_code": route_data.get("code")
+        }), 404
+
+    routes = []
+
+    for index, route in enumerate(route_data.get("routes", []), start=1):
+
+        routes.append({
+            "route_id": index,
+            "distance_km": round(
+                route["distance"] / 1000, 2
+            ),
+            "duration_minutes": round(
+                route["duration"] / 60, 1
+            ),
+            "geometry": route["geometry"]
+        })
+
+    return jsonify({
+        "success": True,
+        "source": "OpenStreetMap road network + OSRM",
+        "traffic_data": False,
+        "traffic_note": (
+            "OSRM duration is a road-network routing estimate; "
+            "it is not a live traffic ETA."
+        ),
+        "origin": start,
+        "destination": end,
+        "routes": routes,
+        "generated_at": datetime.utcnow().isoformat() + "Z"
+    })
 
 # ==============================
 # GET VEHICLES
@@ -577,7 +729,7 @@ def status():
             "connected",
 
         "routing_engine":
-            "connected",
+            "OSRM/OpenStreetMap",
 
         "vehicle_tracking":
             "GPS-ready",
