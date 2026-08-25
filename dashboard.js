@@ -1,356 +1,144 @@
-// ==========================================
-// ROUTEGUARD AI - DASHBOARD JAVASCRIPT
-// ==========================================
+const API_BASE = "/api";
 
-
-// ==========================================
-// 1. BACKEND URL
-// ==========================================
-
-const API_BASE = "";
-
-
-// ==========================================
-// 2. ELEMENTS
-// ==========================================
-
-const activeVehiclesElement =
-    document.getElementById("activeVehicles");
-
-const delayedVehiclesElement =
-    document.getElementById("delayedVehicles");
-
-const activeAlertsElement =
-    document.getElementById("activeAlerts");
-
-const backendStatusElement =
-    document.getElementById("backendStatus");
-
-const weatherStatusElement =
-    document.getElementById("weatherStatus");
-
-const vehicleStatusElement =
-    document.getElementById("vehicleStatus");
-
-const riskStatusElement =
-    document.getElementById("riskStatus");
-
-
-// ==========================================
-// 3. LOAD SYSTEM STATUS
-// ==========================================
-
-async function loadSystemStatus() {
-
+async function loadDashboard() {
     try {
+        // Backend status
+        const statusResponse = await fetch(`${API_BASE}/status`);
+        const status = await statusResponse.json();
 
-        const response =
-            await fetch(`${API_BASE}/api/status`);
+        console.log("RouteGuard Status:", status);
 
-        if (!response.ok) {
-            throw new Error("Backend unavailable");
-        }
+        // Vehicles
+        const vehicleResponse = await fetch(`${API_BASE}/vehicles`);
+        const vehicleData = await vehicleResponse.json();
 
-        const data = await response.json();
+        const vehicles = vehicleData.vehicles || [];
 
+        updateVehicleCount(vehicles);
+        updateSystemStatus(status);
 
-        // Backend
-        if (backendStatusElement) {
+        // If vehicles exist, fetch real weather/risk
+        if (vehicles.length > 0) {
+            const vehicle = vehicles[0];
 
-            backendStatusElement.textContent =
-                data.backend === "online"
-                    ? "Online"
-                    : "Offline";
+            const riskResponse = await fetch(
+                `${API_BASE}/risk/${encodeURIComponent(vehicle.vehicle_id)}`
+            );
 
-        }
-
-
-        // Weather
-        if (weatherStatusElement) {
-
-            weatherStatusElement.textContent =
-                data.weather_api === "connected"
-                    ? "Connected"
-                    : "Unavailable";
-
-        }
-
-
-        // Vehicle tracking
-        if (vehicleStatusElement) {
-
-            vehicleStatusElement.textContent =
-                data.vehicle_tracking || "GPS Ready";
-
-        }
-
-
-        // Risk engine
-        if (riskStatusElement) {
-
-            riskStatusElement.textContent =
-                data.risk_engine || "Active";
-
-        }
-
-
-    } catch (error) {
-
-        console.error(
-            "System status error:",
-            error
-        );
-
-
-        if (backendStatusElement) {
-
-            backendStatusElement.textContent =
-                "Offline";
-
-        }
-
-    }
-
-}
-
-
-// ==========================================
-// 4. LOAD VEHICLES
-// ==========================================
-
-async function loadVehicles() {
-
-    try {
-
-        const response =
-            await fetch(`${API_BASE}/api/vehicles`);
-
-        if (!response.ok) {
-            throw new Error("Vehicle API unavailable");
-        }
-
-        const data = await response.json();
-
-        const vehicles =
-            data.vehicles || [];
-
-
-        // ----------------------------------
-        // ACTIVE VEHICLES
-        // ----------------------------------
-
-        const activeVehicles =
-            vehicles.filter(vehicle => {
-
-                return (
-                    vehicle.status === "active" ||
-                    vehicle.status === "on_route"
-                );
-
-            });
-
-
-        if (activeVehiclesElement) {
-
-            activeVehiclesElement.textContent =
-                activeVehicles.length;
-
-        }
-
-
-        // ----------------------------------
-        // DELAYED VEHICLES
-        // ----------------------------------
-
-        const delayedVehicles =
-            vehicles.filter(vehicle => {
-
-                return (
-                    vehicle.status === "delayed"
-                );
-
-            });
-
-
-        if (delayedVehiclesElement) {
-
-            delayedVehiclesElement.textContent =
-                delayedVehicles.length;
-
-        }
-
-
-        // ----------------------------------
-        // ACTIVE ALERTS
-        // ----------------------------------
-
-        if (activeAlertsElement) {
-
-            activeAlertsElement.textContent =
-                delayedVehicles.length;
-
-        }
-
-
-        console.log(
-            "Vehicles loaded:",
-            vehicles
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Vehicle loading error:",
-            error
-        );
-
-    }
-
-}
-
-
-// ==========================================
-// 5. REFRESH DASHBOARD
-// ==========================================
-
-async function refreshDashboard() {
-
-    await loadSystemStatus();
-
-    await loadVehicles();
-
-}
-
-
-// ==========================================
-// 6. LOGOUT
-// ==========================================
-
-function logout() {
-
-    const confirmLogout =
-        confirm(
-            "Are you sure you want to logout?"
-        );
-
-
-    if (!confirmLogout) {
-        return;
-    }
-
-
-    window.location.href =
-        "index.html";
-
-}
-
-
-// ==========================================
-// 7. ROUTE BUTTON
-// ==========================================
-
-const routeButton =
-    document.querySelector(".route-btn");
-
-
-if (routeButton) {
-
-    routeButton.addEventListener(
-        "click",
-        function () {
-
-            const inputs =
-                document.querySelectorAll(
-                    ".route-inputs input"
-                );
-
-
-            const from =
-                inputs[0]?.value.trim();
-
-            const destination =
-                inputs[1]?.value.trim();
-
-
-            if (!from || !destination) {
-
-                alert(
-                    "Please enter both starting point and destination."
-                );
-
-                return;
-
+            if (riskResponse.ok) {
+                const riskData = await riskResponse.json();
+                updateRisk(riskData);
             }
-
-
-            alert(
-                `Route analysis started:\n\n${from} → ${destination}`
-            );
-
         }
-    );
 
+    } catch (error) {
+        console.error("Dashboard API error:", error);
+        showBackendError();
+    }
 }
 
 
-// ==========================================
-// 8. NAVIGATION
-// ==========================================
+// ==============================
+// VEHICLE COUNT
+// ==============================
 
-const navItems =
-    document.querySelectorAll(
-        ".nav-item"
+function updateVehicleCount(vehicles) {
+
+    const activeVehicles = vehicles.filter(
+        vehicle => vehicle.status === "active"
     );
 
+    const elements = document.querySelectorAll(
+        ".stat-card, .kpi-card, .metric-card"
+    );
 
-navItems.forEach(item => {
+    elements.forEach(card => {
 
-    item.addEventListener(
-        "click",
-        function (event) {
+        const text = card.innerText.toLowerCase();
 
-            event.preventDefault();
+        if (text.includes("active vehicle")) {
 
-
-            navItems.forEach(nav => {
-
-                nav.classList.remove(
-                    "active"
-                );
-
-            });
-
-
-            this.classList.add(
-                "active"
+            const number = card.querySelector(
+                ".stat-value, .kpi-value, strong, h2"
             );
 
+            if (number) {
+                number.textContent = activeVehicles.length;
+            }
         }
+    });
+}
+
+
+// ==============================
+// SYSTEM STATUS
+// ==============================
+
+function updateSystemStatus(status) {
+
+    console.log("Backend:", status.backend);
+    console.log("Weather API:", status.weather_api);
+    console.log("Routing:", status.routing_engine);
+    console.log("GPS:", status.vehicle_tracking);
+    console.log("Risk Engine:", status.risk_engine);
+}
+
+
+// ==============================
+// RISK
+// ==============================
+
+function updateRisk(data) {
+
+    console.log("REAL RISK DATA:", data);
+
+    const risk = data.risk;
+
+    if (!risk) return;
+
+    const riskLevel = risk.risk_level;
+    const riskScore = risk.risk_score;
+
+    const riskElements = document.querySelectorAll(
+        ".risk-value, .risk-level, .alert-risk"
     );
 
-});
+    riskElements.forEach(element => {
+        element.textContent =
+            `${riskLevel} (${riskScore}/100)`;
+    });
+
+    console.log(
+        "Weather:",
+        risk.weather
+    );
+
+    console.log(
+        "Reasons:",
+        risk.reasons
+    );
+}
 
 
-// ==========================================
-// 9. INITIAL LOAD
-// ==========================================
+// ==============================
+// ERROR
+// ==============================
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+function showBackendError() {
 
-        refreshDashboard();
-
-    }
-);
+    console.warn(
+        "RouteGuard backend unavailable."
+    );
+}
 
 
-// ==========================================
-// 10. AUTO REFRESH
-// ==========================================
+// ==============================
+// AUTO REFRESH
+// ==============================
+
+loadDashboard();
 
 setInterval(
-    refreshDashboard,
+    loadDashboard,
     30000
 );
