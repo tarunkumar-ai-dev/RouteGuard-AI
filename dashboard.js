@@ -106,6 +106,7 @@ async function loadRealRoute(
 
 
         drawRoute(data);
+        await loadRouteRisk(data.routes[0]);
 
 
         if (loading) {
@@ -461,3 +462,159 @@ document.addEventListener(
 
     }
 );
+
+
+// ==========================================
+// REAL ROUTE WEATHER + RISK
+// ==========================================
+
+async function loadRouteRisk(route) {
+
+    try {
+
+        const response = await fetch(
+            `${API_BASE}/route-risk`,
+            {
+                method: "POST",
+
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    route: route
+                })
+            }
+        );
+
+
+        if (!response.ok) {
+
+            const error =
+                await response.json()
+                    .catch(() => ({}));
+
+            throw new Error(
+                error.error ||
+                "Route risk unavailable."
+            );
+        }
+
+
+        const data =
+            await response.json();
+
+
+        console.log(
+            "REAL ROUTE RISK:",
+            data
+        );
+
+
+        updateRiskPanel(
+            data.risk
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Route risk error:",
+            error
+        );
+
+    }
+
+}
+
+
+// ==========================================
+// UPDATE RISK UI
+// ==========================================
+
+function updateRiskPanel(risk) {
+
+    if (!risk) return;
+
+
+    const alertList =
+        document.getElementById(
+            "alertList"
+        );
+
+
+    if (!alertList) return;
+
+
+    const level =
+        risk.risk_level || "UNKNOWN";
+
+
+    const score =
+        risk.risk_score;
+
+
+    const reasons =
+        risk.reasons || [];
+
+
+    let icon = "ℹ";
+
+
+    if (level === "HIGH") {
+        icon = "🔴";
+    }
+
+    else if (level === "MEDIUM") {
+        icon = "🟡";
+    }
+
+    else if (level === "LOW") {
+        icon = "🟢";
+    }
+
+
+    const reasonText =
+        reasons.length
+            ? reasons.join(" • ")
+            : "No specific weather risk detected.";
+
+
+    alertList.innerHTML = `
+
+        <div class="alert-item">
+
+            <div class="alert-icon">
+                ${icon}
+            </div>
+
+            <div class="alert-content">
+
+                <strong>
+                    Route Weather Risk:
+                    ${escapeHtml(level)}
+                </strong>
+
+                <p>
+                    Risk score:
+                    ${
+                        score !== null &&
+                        score !== undefined
+                            ? escapeHtml(
+                                String(score)
+                            )
+                            : "Unavailable"
+                    }
+                </p>
+
+                <small>
+                    ${escapeHtml(reasonText)}
+                </small>
+
+            </div>
+
+        </div>
+
+    `;
+
+}
