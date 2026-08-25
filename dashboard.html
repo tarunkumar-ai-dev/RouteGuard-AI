@@ -7,14 +7,22 @@
 
     <title>RouteGuard AI | Dashboard</title>
 
+    <!-- Dashboard CSS -->
     <link rel="stylesheet" href="dashboard.css">
+
+    <!-- Leaflet CSS -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
 </head>
 
 <body>
 
     <div class="dashboard">
 
-        <!-- SIDEBAR -->
+        <!-- ================= SIDEBAR ================= -->
+
         <aside class="sidebar">
 
             <div class="logo">
@@ -62,7 +70,10 @@
                     Settings
                 </a>
 
-                <button class="logout-btn" onclick="logout()">
+                <button
+                    class="logout-btn"
+                    onclick="logout()"
+                >
                     ← Logout
                 </button>
 
@@ -71,16 +82,26 @@
         </aside>
 
 
-        <!-- MAIN CONTENT -->
+        <!-- ================= MAIN ================= -->
+
         <main class="main-content">
 
             <!-- TOP BAR -->
+
             <header class="topbar">
 
                 <div>
-                    <p class="eyebrow">SMART LOGISTICS CONTROL ROOM</p>
-                    <h1>Operations Dashboard</h1>
+
+                    <p class="eyebrow">
+                        SMART LOGISTICS CONTROL ROOM
+                    </p>
+
+                    <h1>
+                        Operations Dashboard
+                    </h1>
+
                 </div>
+
 
                 <div class="top-actions">
 
@@ -88,6 +109,7 @@
                         🔔
                         <span class="notification-dot"></span>
                     </button>
+
 
                     <div class="profile">
 
@@ -107,7 +129,8 @@
             </header>
 
 
-            <!-- STATS -->
+            <!-- ================= STATS ================= -->
+
             <section class="stats-grid">
 
                 <div class="stat-card">
@@ -117,9 +140,19 @@
                     </div>
 
                     <div>
-                        <span>ACTIVE VEHICLES</span>
-                        <strong id="activeVehicles">0</strong>
-                        <small>Currently on route</small>
+
+                        <span>
+                            ACTIVE VEHICLES
+                        </span>
+
+                        <strong id="activeVehicles">
+                            0
+                        </strong>
+
+                        <small>
+                            Live GPS vehicles
+                        </small>
+
                     </div>
 
                 </div>
@@ -132,9 +165,19 @@
                     </div>
 
                     <div>
-                        <span>TOTAL TRIPS</span>
-                        <strong id="totalTrips">24</strong>
-                        <small>Today's operations</small>
+
+                        <span>
+                            ROUTE DISTANCE
+                        </span>
+
+                        <strong id="routeDistance">
+                            —
+                        </strong>
+
+                        <small>
+                            Current selected route
+                        </small>
+
                     </div>
 
                 </div>
@@ -147,9 +190,19 @@
                     </div>
 
                     <div>
-                        <span>DELAYED VEHICLES</span>
-                        <strong id="delayedVehicles">0</strong>
-                        <small>Need attention</small>
+
+                        <span>
+                            ROUTE DURATION
+                        </span>
+
+                        <strong id="routeDuration">
+                            —
+                        </strong>
+
+                        <small>
+                            Road-network estimate
+                        </small>
+
                     </div>
 
                 </div>
@@ -162,9 +215,19 @@
                     </div>
 
                     <div>
-                        <span>ACTIVE ALERTS</span>
-                        <strong id="activeAlerts">0</strong>
-                        <small>Route disruptions</small>
+
+                        <span>
+                            DELAYED VEHICLES
+                        </span>
+
+                        <strong id="delayedVehicles">
+                            0
+                        </strong>
+
+                        <small>
+                            Live vehicle status
+                        </small>
+
                     </div>
 
                 </div>
@@ -172,93 +235,51 @@
             </section>
 
 
-            <!-- MAIN GRID -->
+            <!-- ================= MAIN GRID ================= -->
+
             <section class="content-grid">
 
 
-                <!-- MAP -->
+                <!-- ================= REAL MAP ================= -->
+
                 <div class="panel map-panel">
 
                     <div class="panel-header">
 
                         <div>
-                            <span class="panel-label">LIVE OPERATIONS</span>
-                            <h2>Fleet Map</h2>
+
+                            <span class="panel-label">
+                                LIVE OPERATIONS
+                            </span>
+
+                            <h2>
+                                Real Fleet Map
+                            </h2>
+
                         </div>
 
+
                         <div class="live-indicator">
+
                             <span></span>
-                            LIVE
+
+                            LIVE MAP
+
                         </div>
 
                     </div>
 
 
-                    <div class="map">
+                    <div
+                        class="map"
+                        id="realMap"
+                    >
 
-                        <div class="map-grid"></div>
-
-                        <!-- ROADS -->
-                        <div class="map-road road-1"></div>
-                        <div class="map-road road-2"></div>
-                        <div class="map-road road-3"></div>
-                        <div class="map-road road-4"></div>
-
-                        <!-- ROUTES -->
-                        <div class="route route-safe"></div>
-                        <div class="route route-danger"></div>
-
-                        <!-- DELHI -->
-                        <div class="map-location delhi">
-                            <span></span>
-                            Delhi
-                        </div>
-
-                        <!-- LUCKNOW -->
-                        <div class="map-location lucknow">
-                            <span></span>
-                            Lucknow
-                        </div>
-
-                        <!-- VEHICLES -->
-                        <div class="vehicle vehicle-1">
-                            🚚
-                        </div>
-
-                        <div class="vehicle vehicle-2">
-                            🚛
-                        </div>
-
-                        <div class="vehicle vehicle-3">
-                            🚚
-                        </div>
-
-                        <!-- RISK ZONE -->
-                        <div class="risk-zone">
-
-                            <strong>⚠</strong>
-
-                            <span>
-                                HIGH RISK
-                                <small>NH-27</small>
-                            </span>
-
-                        </div>
-
-
-                        <!-- ROUTE INFO -->
-                        <div class="map-info">
-
-                            <span>AI RECOMMENDED ROUTE</span>
-
-                            <strong>
-                                Alternate Route B
-                            </strong>
-
-                            <small>
-                                Estimated delay: +35 min
-                            </small>
-
+                        <div
+                            class="map-loading"
+                            id="mapLoading"
+                        >
+                            Loading real map...
                         </div>
 
                     </div>
@@ -266,25 +287,34 @@
                 </div>
 
 
-                <!-- RIGHT PANEL -->
+                <!-- ================= RIGHT COLUMN ================= -->
+
                 <div class="right-column">
 
 
                     <!-- SYSTEM STATUS -->
+
                     <div class="panel system-card">
 
                         <div class="panel-header">
 
                             <div>
+
                                 <span class="panel-label">
                                     SYSTEM
                                 </span>
 
-                                <h2>AI Intelligence</h2>
+                                <h2>
+                                    AI Intelligence
+                                </h2>
+
                             </div>
 
-                            <span class="status-online">
-                                ONLINE
+                            <span
+                                class="status-online"
+                                id="systemOnline"
+                            >
+                                CHECKING
                             </span>
 
                         </div>
@@ -292,15 +322,21 @@
 
                         <div class="system-list">
 
+
                             <div class="system-row">
 
                                 <span class="system-dot"></span>
 
                                 <div>
-                                    <strong>Weather Intelligence</strong>
+
+                                    <strong>
+                                        Weather Intelligence
+                                    </strong>
+
                                     <small id="weatherStatus">
-                                        Connected
+                                        Checking live API...
                                     </small>
+
                                 </div>
 
                             </div>
@@ -311,10 +347,15 @@
                                 <span class="system-dot"></span>
 
                                 <div>
-                                    <strong>Vehicle Tracking</strong>
+
+                                    <strong>
+                                        Vehicle Tracking
+                                    </strong>
+
                                     <small id="vehicleStatus">
-                                        GPS Ready
+                                        Checking GPS...
                                     </small>
+
                                 </div>
 
                             </div>
@@ -325,10 +366,15 @@
                                 <span class="system-dot"></span>
 
                                 <div>
-                                    <strong>Risk Engine</strong>
+
+                                    <strong>
+                                        Risk Engine
+                                    </strong>
+
                                     <small id="riskStatus">
-                                        Rule-based v1
+                                        Checking...
                                     </small>
+
                                 </div>
 
                             </div>
@@ -339,11 +385,105 @@
                                 <span class="system-dot"></span>
 
                                 <div>
-                                    <strong>Routing Engine</strong>
-                                    <small>
-                                        Connected
+
+                                    <strong>
+                                        Routing Engine
+                                    </strong>
+
+                                    <small id="routingStatus">
+                                        Checking...
                                     </small>
+
                                 </div>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ROUTE INFORMATION -->
+
+                    <div class="panel route-info-card">
+
+                        <div class="panel-header">
+
+                            <div>
+
+                                <span class="panel-label">
+                                    SELECTED ROUTE
+                                </span>
+
+                                <h2>
+                                    Route Information
+                                </h2>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="route-summary">
+
+                            <div class="location-box">
+
+                                <span>
+                                    FROM
+                                </span>
+
+                                <strong id="routeOrigin">
+                                    Delhi
+                                </strong>
+
+                            </div>
+
+
+                            <div class="arrow">
+                                →
+                            </div>
+
+
+                            <div class="location-box">
+
+                                <span>
+                                    TO
+                                </span>
+
+                                <strong id="routeDestination">
+                                    Lucknow
+                                </strong>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="route-metrics">
+
+                            <div>
+
+                                <span>
+                                    DISTANCE
+                                </span>
+
+                                <strong id="routeDistanceSmall">
+                                    —
+                                </strong>
+
+                            </div>
+
+
+                            <div>
+
+                                <span>
+                                    DURATION
+                                </span>
+
+                                <strong id="routeDurationSmall">
+                                    —
+                                </strong>
 
                             </div>
 
@@ -352,103 +492,37 @@
                     </div>
 
 
-                    <!-- ALERTS -->
+                    <!-- LIVE ALERTS -->
+
                     <div class="panel alerts-card">
 
                         <div class="panel-header">
 
                             <div>
+
                                 <span class="panel-label">
                                     LIVE MONITORING
                                 </span>
 
-                                <h2>Route Alerts</h2>
-                            </div>
+                                <h2>
+                                    Route Alerts
+                                </h2>
 
-                            <button class="view-btn">
-                                View All
-                            </button>
+                            </div>
 
                         </div>
 
 
-                        <div class="alert-list">
+                        <div
+                            class="alert-list"
+                            id="alertList"
+                        >
 
+                            <div class="empty-alert">
 
-                            <div class="alert-item high">
-
-                                <div class="alert-icon">
-                                    ⚠
-                                </div>
-
-                                <div class="alert-content">
-
-                                    <strong>
-                                        NH-27 disruption risk
-                                    </strong>
-
-                                    <p>
-                                        Heavy weather conditions detected
-                                    </p>
-
-                                    <small>
-                                        HIGH RISK • Just now
-                                    </small>
-
-                                </div>
+                                No active route alerts.
 
                             </div>
-
-
-                            <div class="alert-item medium">
-
-                                <div class="alert-icon">
-                                    !
-                                </div>
-
-                                <div class="alert-content">
-
-                                    <strong>
-                                        Traffic increasing
-                                    </strong>
-
-                                    <p>
-                                        Expected delay around Kanpur
-                                    </p>
-
-                                    <small>
-                                        MEDIUM RISK • 8 min ago
-                                    </small>
-
-                                </div>
-
-                            </div>
-
-
-                            <div class="alert-item low">
-
-                                <div class="alert-icon">
-                                    ✓
-                                </div>
-
-                                <div class="alert-content">
-
-                                    <strong>
-                                        Route operating normally
-                                    </strong>
-
-                                    <p>
-                                        Delhi → Lucknow alternate route
-                                    </p>
-
-                                    <small>
-                                        LOW RISK • 12 min ago
-                                    </small>
-
-                                </div>
-
-                            </div>
-
 
                         </div>
 
@@ -459,26 +533,28 @@
             </section>
 
 
-            <!-- BOTTOM SECTION -->
+            <!-- ================= BOTTOM ================= -->
+
             <section class="bottom-grid">
 
 
                 <!-- VEHICLES -->
+
                 <div class="panel vehicles-panel">
 
                     <div class="panel-header">
 
                         <div>
+
                             <span class="panel-label">
-                                FLEET
+                                LIVE FLEET
                             </span>
 
-                            <h2>Active Vehicles</h2>
-                        </div>
+                            <h2>
+                                Active Vehicles
+                            </h2>
 
-                        <button class="view-btn">
-                            View Fleet
-                        </button>
+                        </div>
 
                     </div>
 
@@ -487,73 +563,32 @@
 
                         <div class="table-header">
 
-                            <span>VEHICLE</span>
-                            <span>ROUTE</span>
-                            <span>STATUS</span>
-                            <span>ETA</span>
-
-                        </div>
-
-
-                        <div class="table-row">
-
                             <span>
-                                <strong>TRK-101</strong>
+                                VEHICLE
                             </span>
 
                             <span>
-                                Delhi → Lucknow
-                            </span>
-
-                            <span class="status-badge active">
-                                ● On Route
+                                LOCATION
                             </span>
 
                             <span>
-                                4:20 PM
+                                STATUS
+                            </span>
+
+                            <span>
+                                UPDATED
                             </span>
 
                         </div>
 
 
-                        <div class="table-row">
+                        <div
+                            id="vehicleRows"
+                        >
 
-                            <span>
-                                <strong>TRK-102</strong>
-                            </span>
-
-                            <span>
-                                Delhi → Kanpur
-                            </span>
-
-                            <span class="status-badge delayed">
-                                ● Delayed
-                            </span>
-
-                            <span>
-                                5:05 PM
-                            </span>
-
-                        </div>
-
-
-                        <div class="table-row">
-
-                            <span>
-                                <strong>TRK-103</strong>
-                            </span>
-
-                            <span>
-                                Agra → Lucknow
-                            </span>
-
-                            <span class="status-badge active">
-                                ● On Route
-                            </span>
-
-                            <span>
-                                6:10 PM
-                            </span>
+                            <div class="empty-table">
+                                No live vehicles registered.
+                            </div>
 
                         </div>
 
@@ -562,32 +597,41 @@
                 </div>
 
 
-                <!-- QUICK ROUTE -->
+                <!-- ROUTE PLANNING -->
+
                 <div class="panel route-panel">
 
                     <span class="panel-label">
-                        QUICK ACTION
+                        ROUTE PLANNING
                     </span>
 
-                    <h2>Plan a Route</h2>
+                    <h2>
+                        Plan a Route
+                    </h2>
 
                     <p>
-                        Find the safest and fastest route
-                        using RouteGuard AI.
+                        Calculate a route using the real
+                        road network.
                     </p>
 
 
                     <div class="route-inputs">
 
                         <input
+                            id="originInput"
                             type="text"
                             placeholder="From"
                             value="Delhi"
                         >
 
-                        <span>→</span>
+
+                        <span>
+                            →
+                        </span>
+
 
                         <input
+                            id="destinationInput"
                             type="text"
                             placeholder="Destination"
                             value="Lucknow"
@@ -596,22 +640,35 @@
                     </div>
 
 
-                    <button class="route-btn">
-                        ANALYZE ROUTE →
+                    <button
+                        class="route-btn"
+                        id="routeButton"
+                    >
+                        ANALYZE REAL ROUTE →
                     </button>
+
+
+                    <small class="route-source">
+                        Routing source:
+                        OpenStreetMap + OSRM
+                    </small>
 
                 </div>
 
             </section>
 
 
-            <!-- FOOTER -->
+            <!-- ================= FOOTER ================= -->
+
             <footer class="dashboard-footer">
 
-                RouteGuard AI • Smart Logistics & Accessibility
+                <span>
+                    RouteGuard AI • Smart Logistics & Accessibility
+                </span>
 
                 <span>
-                    Backend: <strong id="backendStatus">
+                    Backend:
+                    <strong id="backendStatus">
                         Checking...
                     </strong>
                 </span>
@@ -622,6 +679,15 @@
 
     </div>
 
+
+    <!-- ================= LEAFLET ================= -->
+
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+
+    <!-- ================= DASHBOARD JS ================= -->
 
     <script src="dashboard.js"></script>
 
