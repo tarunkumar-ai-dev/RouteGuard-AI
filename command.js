@@ -1,1038 +1,326 @@
 // ==========================================
-// ROUTEGUARD AI
-// SMART LOGISTICS COMMAND CENTER
-// FULL BACKEND CONNECTED VERSION
+// ROUTEGUARD AI - REAL DASHBOARD
 // ==========================================
 
-
-// ==========================================
-// BACKEND
-// ==========================================
-
-const BACKEND_URL = "http://127.0.0.1:5000";
-
-
-// ==========================================
-// GLOBAL VARIABLES
-// ==========================================
+const API_BASE = "/api";
 
 let map = null;
-
 let routeLayer = null;
-
-let locationMarkers = [];
-
-let vehicleMarkers = [];
+let startMarker = null;
+let endMarker = null;
 
 
 // ==========================================
-// INITIALIZE MAP
+// INITIALIZE REAL MAP
 // ==========================================
 
-map = L.map("realMap");
+function initializeMap() {
 
-L.tileLayer(
-    "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    {
-        maxZoom: 19,
-        attribution:
-            "&copy; OpenStreetMap contributors"
-    }
-).addTo(map);
+    const mapElement =
+        document.getElementById("realMap");
 
-map.setView(
-    [27.5, 78.5],
-    6
-);
-
-
-// ==========================================
-// GEOCODING
-// ==========================================
-
-async function findLocation(place) {
-
-    const url =
-        "https://nominatim.openstreetmap.org/search" +
-        "?format=json" +
-        "&limit=1" +
-        "&countrycodes=in" +
-        "&q=" +
-        encodeURIComponent(place);
-
-    const response =
-        await fetch(url);
-
-    if (!response.ok) {
-
-        throw new Error(
-            "Location service unavailable."
-        );
-
-    }
-
-    const data =
-        await response.json();
-
-    if (data.length === 0) {
-
-        throw new Error(
-            `Location not found: ${place}`
-        );
-
-    }
-
-    return {
-
-        lat:
-            parseFloat(data[0].lat),
-
-        lon:
-            parseFloat(data[0].lon),
-
-        name:
-            data[0].display_name
-
-    };
-}
-
-
-// ==========================================
-// WEATHER THROUGH BACKEND
-// ==========================================
-
-async function getWeather(
-    lat,
-    lon
-) {
-
-    const response =
-        await fetch(
-            `${BACKEND_URL}/api/weather?lat=${lat}&lon=${lon}`
-        );
-
-    if (!response.ok) {
-
-        throw new Error(
-            "Backend weather service unavailable."
-        );
-
-    }
-
-    const data =
-        await response.json();
-
-    if (data.error) {
-
-        throw new Error(
-            data.error
-        );
-
-    }
-
-    return data.current;
-}
-
-
-// ==========================================
-// WEATHER RISK
-// ==========================================
-
-function calculateWeatherRisk(
-    weather
-) {
-
-    let risk = 0;
-
-    const factors = [];
-
-
-    // Rain
-    if (
-        weather.rain > 0
-    ) {
-
-        risk += 20;
-
-        factors.push(
-            "Rain detected"
-        );
-
-    }
-
-
-    // Heavy rain
-    if (
-        weather.rain >= 5
-    ) {
-
-        risk += 25;
-
-        factors.push(
-            "Heavy rainfall"
-        );
-
-    }
-
-
-    // Strong wind
-    if (
-        weather.wind_speed_10m >= 30
-    ) {
-
-        risk += 20;
-
-        factors.push(
-            "Strong wind"
-        );
-
-    }
-
-
-    // Very strong wind
-    if (
-        weather.wind_speed_10m >= 50
-    ) {
-
-        risk += 15;
-
-        factors.push(
-            "Very strong wind"
-        );
-
-    }
-
-
-    // High precipitation
-    if (
-        weather.precipitation >= 5
-    ) {
-
-        risk += 20;
-
-        factors.push(
-            "High precipitation"
-        );
-
-    }
-
-
-    // Thunderstorm
-    if (
-        weather.weather_code >= 95
-    ) {
-
-        risk += 25;
-
-        factors.push(
-            "Thunderstorm signal"
-        );
-
-    }
-
-
-    return {
-
-        score:
-            Math.min(
-                risk,
-                100
-            ),
-
-        factors:
-            factors
-
-    };
-
-}
-
-
-// ==========================================
-// COMBINED ROUTE RISK
-// ==========================================
-
-function calculateRouteRisk(
-    weatherRisk,
-    distance,
-    duration,
-    weather
-) {
-
-    let risk =
-        weatherRisk.score;
-
-    const factors =
-        [
-            ...weatherRisk.factors
-        ];
-
-
-    // Long route
-    if (
-        distance > 500
-    ) {
-
-        risk += 8;
-
-        factors.push(
-            "Long-distance route"
-        );
-
-    }
-
-
-    // Very long route
-    if (
-        distance > 800
-    ) {
-
-        risk += 7;
-
-        factors.push(
-            "Very long route"
-        );
-
-    }
-
-
-    // Long journey
-    if (
-        duration > 600
-    ) {
-
-        risk += 5;
-
-        factors.push(
-            "Long driving duration"
-        );
-
-    }
-
-
-    // High wind exposure
-    if (
-        weather.wind_speed_10m > 40
-    ) {
-
-        risk += 10;
-
-        factors.push(
-            "High wind exposure"
-        );
-
-    }
-
-
-    return {
-
-        score:
-            Math.min(
-                Math.round(risk),
-                100
-            ),
-
-        factors:
-            factors
-
-    };
-
-}
-
-
-// ==========================================
-// UPDATE RISK UI
-// ==========================================
-
-function updateRiskUI(
-    risk,
-    factors
-) {
-
-    const riskScore =
-        document.getElementById(
-            "riskScore"
-        );
-
-    const riskBar =
-        document.getElementById(
-            "riskBar"
-        );
-
-    const riskMessage =
-        document.getElementById(
-            "riskMessage"
-        );
-
-
-    if (
-        !riskScore ||
-        !riskBar ||
-        !riskMessage
-    ) {
-
+    if (!mapElement || typeof L === "undefined") {
+        console.error("Leaflet/map not available.");
         return;
-
     }
 
+    map = L.map("realMap");
 
-    riskScore.textContent =
-        `${risk}%`;
-
-
-    riskBar.style.width =
-        `${Math.max(risk, 5)}%`;
-
-
-    if (
-        risk >= 70
-    ) {
-
-        riskMessage.innerHTML =
-            "🔴 HIGH RISK — Multiple risk signals detected.";
-
-    }
-
-    else if (
-        risk >= 40
-    ) {
-
-        riskMessage.innerHTML =
-            "🟠 MODERATE RISK — Monitor route conditions.";
-
-    }
-
-    else {
-
-        riskMessage.innerHTML =
-            "🟢 LOW RISK — Current conditions appear favorable.";
-
-    }
-
-
-    console.log(
-        "Risk Score:",
-        risk
-    );
-
-    console.log(
-        "Risk Factors:",
-        factors
-    );
-
-}
-
-
-// ==========================================
-// LOCATION MARKER
-// ==========================================
-
-function createLocationMarker(
-    location,
-    title,
-    weather
-) {
-
-    const marker =
-        L.marker(
-            [
-                location.lat,
-                location.lon
-            ]
-        )
-        .addTo(map)
-        .bindPopup(
-
-            `<b>${title}</b><br>` +
-
-            `${location.name}` +
-
-            `<br><br>` +
-
-            `🌡️ Temperature: ` +
-
-            `${weather.temperature_2m}°C` +
-
-            `<br>` +
-
-            `🌧️ Rain: ` +
-
-            `${weather.rain} mm` +
-
-            `<br>` +
-
-            `💨 Wind: ` +
-
-            `${weather.wind_speed_10m} km/h`
-
-        );
-
-
-    locationMarkers.push(
-        marker
-    );
-
-}
-
-
-// ==========================================
-// CLEAR LOCATION MARKERS
-// ==========================================
-
-function clearLocationMarkers() {
-
-    locationMarkers.forEach(
-        marker => {
-
-            map.removeLayer(
-                marker
-            );
-
+    L.tileLayer(
+        "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+        {
+            maxZoom: 19,
+            attribution:
+                '&copy; OpenStreetMap contributors'
         }
+    ).addTo(map);
+
+
+    // Initial India view
+    map.setView(
+        [26.8467, 80.9462],
+        6
     );
 
 
-    locationMarkers = [];
-
+    loadRealRoute(
+        "Delhi",
+        "Lucknow"
+    );
 }
 
 
 // ==========================================
-// REAL ROUTE ANALYSIS
+// LOAD REAL ROUTE
 // ==========================================
 
-async function calculateRoute() {
+async function loadRealRoute(
+    origin,
+    destination
+) {
 
-    const originInput =
+    const loading =
         document.getElementById(
-            "origin"
+            "mapLoading"
         );
-
-    const destinationInput =
-        document.getElementById(
-            "destination"
-        );
-
-    const button =
-        document.getElementById(
-            "analyzeBtn"
-        );
-
-
-    if (
-        !originInput ||
-        !destinationInput ||
-        !button
-    ) {
-
-        console.error(
-            "Required HTML elements not found."
-        );
-
-        return;
-
-    }
-
-
-    const originText =
-        originInput.value.trim();
-
-
-    const destinationText =
-        destinationInput.value.trim();
-
-
-    if (
-        !originText ||
-        !destinationText
-    ) {
-
-        alert(
-            "Please enter both origin and destination."
-        );
-
-        return;
-
-    }
-
-
-    button.disabled =
-        true;
-
-    button.textContent =
-        "🔄 Analyzing...";
-
 
     try {
 
-        // ==================================
-        // 1. FIND ORIGIN
-        // ==================================
-
-        const origin =
-            await findLocation(
-                originText
-            );
+        if (loading) {
+            loading.textContent =
+                `Finding real route: ${origin} → ${destination}`;
+        }
 
 
-        // ==================================
-        // 2. FIND DESTINATION
-        // ==================================
-
-        const destination =
-            await findLocation(
-                destinationText
-            );
-
-
-        // ==================================
-        // 3. GET ORIGIN WEATHER
-        // ==================================
-
-        const originWeather =
-            await getWeather(
-                origin.lat,
-                origin.lon
-            );
-
-
-        // ==================================
-        // 4. GET DESTINATION WEATHER
-        // ==================================
-
-        const destinationWeather =
-            await getWeather(
-                destination.lat,
-                destination.lon
-            );
-
-
-        // ==================================
-        // 5. WEATHER RISK
-        // ==================================
-
-        const originRisk =
-            calculateWeatherRisk(
-                originWeather
-            );
-
-
-        const destinationRisk =
-            calculateWeatherRisk(
-                destinationWeather
-            );
-
-
-        const weatherRisk =
-            originRisk.score >=
-            destinationRisk.score
-
-                ? originRisk
-
-                : destinationRisk;
-
-
-        // ==================================
-        // 6. CLEAR OLD LOCATION MARKERS
-        // ==================================
-
-        clearLocationMarkers();
-
-
-        // ==================================
-        // 7. CREATE ORIGIN MARKER
-        // ==================================
-
-        createLocationMarker(
-            origin,
-            "📍 Origin",
-            originWeather
-        );
-
-
-        // ==================================
-        // 8. CREATE DESTINATION MARKER
-        // ==================================
-
-        createLocationMarker(
-            destination,
-            "🏁 Destination",
-            destinationWeather
-        );
-
-
-        // ==================================
-        // 9. REAL ROAD ROUTE
-        // ==================================
-
-        const routeURL =
-
-            "https://router.project-osrm.org/" +
-
-            "route/v1/driving/" +
-
-            `${origin.lon},${origin.lat};` +
-
-            `${destination.lon},${destination.lat}` +
-
-            "?overview=full" +
-
-            "&geometries=geojson";
-
-
-        const routeResponse =
+        const response =
             await fetch(
-                routeURL
+                `${API_BASE}/route?origin=${encodeURIComponent(origin)}&destination=${encodeURIComponent(destination)}`
             );
 
 
-        if (
-            !routeResponse.ok
-        ) {
+        if (!response.ok) {
+
+            const error =
+                await response.json()
+                    .catch(() => ({}));
 
             throw new Error(
-                "Routing service unavailable."
+                error.error ||
+                "Route service unavailable"
             );
-
         }
 
 
-        const routeData =
-            await routeResponse.json();
+        const data =
+            await response.json();
 
 
-        if (
-            !routeData.routes ||
-            routeData.routes.length === 0
-        ) {
+        if (!data.success ||
+            !data.routes ||
+            !data.routes.length) {
 
             throw new Error(
-                "No driving route found."
+                "No real road route found."
             );
-
         }
 
 
-        const route =
-            routeData.routes[0];
+        drawRoute(data);
 
 
-        // ==================================
-        // 10. REMOVE OLD ROUTE
-        // ==================================
-
-        if (
-            routeLayer
-        ) {
-
-            map.removeLayer(
-                routeLayer
-            );
-
+        if (loading) {
+            loading.remove();
         }
 
 
-        // ==================================
-        // 11. DRAW ROUTE
-        // ==================================
-
-        routeLayer =
-            L.geoJSON(
-                route.geometry,
-                {
-
-                    style: {
-
-                        color:
-                            "#00d084",
-
-                        weight:
-                            6,
-
-                        opacity:
-                            0.9
-
-                    }
-
-                }
-            )
-            .addTo(map);
-
-
-        // ==================================
-        // 12. FIT ROUTE
-        // ==================================
-
-        map.fitBounds(
-            routeLayer.getBounds(),
-            {
-                padding:
-                    [40, 40]
-            }
-        );
-
-
-        // ==================================
-        // 13. DISTANCE
-        // ==================================
-
-        const distance =
-            route.distance /
-            1000;
-
-
-        const distanceRounded =
-            distance.toFixed(1);
-
-
-        // ==================================
-        // 14. ESTIMATED TIME
-        // ==================================
-
-        const duration =
-            Math.round(
-                route.duration /
-                60
-            );
-
-
-        // ==================================
-        // 15. COMBINED RISK
-        // ==================================
-
-        const finalRisk =
-            calculateRouteRisk(
-
-                weatherRisk,
-
-                distance,
-
-                duration,
-
-                originWeather
-
-            );
-
-
-        // ==================================
-        // 16. UPDATE RISK
-        // ==================================
-
-        updateRiskUI(
-            finalRisk.score,
-            finalRisk.factors
-        );
-
-
-        // ==================================
-        // 17. UPDATE RECOMMENDATION
-        // ==================================
-
-        const recommendation =
-            document.getElementById(
-                "recommendedRoute"
-            );
-
-
-        const delayValue =
-            document.getElementById(
-                "delayValue"
-            );
-
-
-        if (
-            recommendation
-        ) {
-
-            if (
-                finalRisk.score >= 70
-            ) {
-
-                recommendation.textContent =
-                    "Evaluate Alternate Route";
-
-            }
-
-            else if (
-                finalRisk.score >= 40
-            ) {
-
-                recommendation.textContent =
-                    "Monitor Route";
-
-            }
-
-            else {
-
-                recommendation.textContent =
-                    "Primary Route";
-
-            }
-
-        }
-
-
-        if (
-            delayValue
-        ) {
-
-            if (
-                finalRisk.score >= 70
-            ) {
-
-                delayValue.textContent =
-                    "High risk";
-
-            }
-
-            else if (
-                finalRisk.score >= 40
-            ) {
-
-                delayValue.textContent =
-                    "Weather dependent";
-
-            }
-
-            else {
-
-                delayValue.textContent =
-                    "Normal conditions";
-
-            }
-
-        }
-
-
-        // ==================================
-        // 18. CONSOLE REPORT
-        // ==================================
-
-        console.log(
-            "================================"
-        );
-
-        console.log(
-            "ROUTEGUARD AI ANALYSIS"
-        );
-
-        console.log(
-            "Origin:",
-            originText
-        );
-
-        console.log(
-            "Destination:",
-            destinationText
-        );
-
-        console.log(
-            "Distance:",
-            distanceRounded,
-            "km"
-        );
-
-        console.log(
-            "Estimated time:",
-            duration,
-            "minutes"
-        );
-
-        console.log(
-            "Weather risk:",
-            weatherRisk.score,
-            "%"
-        );
-
-        console.log(
-            "Combined risk:",
-            finalRisk.score,
-            "%"
-        );
-
-        console.log(
-            "Risk factors:",
-            finalRisk.factors
-        );
-
-        console.log(
-            "================================"
-        );
-
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.error(
-            "RouteGuard error:",
+            "Real route error:",
             error
         );
 
 
-        alert(
-            "Route analysis failed.\n\n" +
-            error.message
-        );
+        if (loading) {
+
+            loading.textContent =
+                "Real route unavailable";
+
+        }
 
     }
-
-    finally {
-
-        button.disabled =
-            false;
-
-        button.textContent =
-            "🤖 Analyze Route";
-
-    }
-
 }
 
 
 // ==========================================
-// REAL BACKEND VEHICLE TRACKING
+// DRAW REAL GEOJSON ROUTE
 // ==========================================
 
-const truckIcon =
-    L.divIcon({
+function drawRoute(data) {
 
-        className:
-            "truck-marker",
+    if (!map) return;
 
-        html:
-            "🚚",
 
-        iconSize:
-            [35, 35],
+    // Remove previous route
+    if (routeLayer) {
+        map.removeLayer(routeLayer);
+    }
 
-        iconAnchor:
-            [17, 17]
 
-    });
+    if (startMarker) {
+        map.removeLayer(startMarker);
+    }
+
+
+    if (endMarker) {
+        map.removeLayer(endMarker);
+    }
+
+
+    const route =
+        data.routes[0];
+
+
+    // --------------------------------------
+    // REAL ROUTE GEOMETRY
+    // --------------------------------------
+
+    routeLayer =
+        L.geoJSON(
+            route.geometry,
+            {
+                style: {
+                    weight: 6,
+                    opacity: 0.9
+                }
+            }
+        ).addTo(map);
+
+
+    // --------------------------------------
+    // START
+    // --------------------------------------
+
+    const startLat =
+        data.origin.latitude;
+
+    const startLon =
+        data.origin.longitude;
+
+
+    // --------------------------------------
+    // DESTINATION
+    // --------------------------------------
+
+    const endLat =
+        data.destination.latitude;
+
+    const endLon =
+        data.destination.longitude;
+
+
+    startMarker =
+        L.marker([
+            startLat,
+            startLon
+        ])
+        .addTo(map)
+        .bindPopup(
+            `<strong>Origin</strong><br>
+             ${data.origin.query}`
+        );
+
+
+    endMarker =
+        L.marker([
+            endLat,
+            endLon
+        ])
+        .addTo(map)
+        .bindPopup(
+            `<strong>Destination</strong><br>
+             ${data.destination.query}`
+        );
+
+
+    // --------------------------------------
+    // FIT MAP TO ROUTE
+    // --------------------------------------
+
+    map.fitBounds(
+        routeLayer.getBounds(),
+        {
+            padding: [30, 30]
+        }
+    );
+
+
+    console.log(
+        "REAL ROUTE:",
+        route
+    );
+
+    console.log(
+        "Distance:",
+        route.distance_km,
+        "km"
+    );
+
+    console.log(
+        "Duration:",
+        route.duration_minutes,
+        "minutes"
+    );
+}
 
 
 // ==========================================
-// LOAD VEHICLES
+// ROUTE BUTTON
 // ==========================================
 
-async function loadVehicles() {
+const routeButton =
+    document.querySelector(
+        ".route-btn"
+    );
+
+
+if (routeButton) {
+
+    routeButton.addEventListener(
+        "click",
+        async function () {
+
+            const inputs =
+                document.querySelectorAll(
+                    ".route-inputs input"
+                );
+
+
+            const origin =
+                inputs[0]?.value.trim();
+
+            const destination =
+                inputs[1]?.value.trim();
+
+
+            if (!origin || !destination) {
+
+                alert(
+                    "Please enter origin and destination."
+                );
+
+                return;
+            }
+
+
+            await loadRealRoute(
+                origin,
+                destination
+            );
+
+        }
+    );
+}
+
+
+// ==========================================
+// SYSTEM STATUS
+// ==========================================
+
+async function loadSystemStatus() {
 
     try {
 
         const response =
             await fetch(
-                `${BACKEND_URL}/api/vehicles`
+                `${API_BASE}/status`
             );
 
 
-        if (
-            !response.ok
-        ) {
-
+        if (!response.ok) {
             throw new Error(
-                "Vehicle service unavailable."
+                "Status unavailable"
             );
-
         }
 
 
@@ -1041,238 +329,135 @@ async function loadVehicles() {
 
 
         console.log(
-            "Backend vehicles:",
-            data.vehicles
+            "SYSTEM STATUS:",
+            data
         );
 
 
-        // Remove previous vehicle markers
-
-        vehicleMarkers.forEach(
-            marker => {
-
-                map.removeLayer(
-                    marker
-                );
-
-            }
-        );
+        const backend =
+            document.getElementById(
+                "backendStatus"
+            );
 
 
-        vehicleMarkers = [];
+        if (backend) {
+
+            backend.textContent =
+                data.backend === "online"
+                    ? "Online"
+                    : "Offline";
+
+        }
 
 
-        // Add ONLY backend vehicles
-
-        data.vehicles.forEach(
-            vehicle => {
-
-                // Validate GPS coordinates
-
-                if (
-                    typeof vehicle.latitude !==
-                        "number" ||
-
-                    typeof vehicle.longitude !==
-                        "number"
-                ) {
-
-                    return;
-
-                }
-
-
-                const marker =
-                    L.marker(
-                        [
-                            vehicle.latitude,
-                            vehicle.longitude
-                        ],
-                        {
-                            icon:
-                                truckIcon
-                        }
-                    )
-                    .addTo(map)
-                    .bindPopup(
-
-                        `<b>🚚 Vehicle ${vehicle.vehicle_id}</b>` +
-
-                        `<br>Status: ` +
-
-                        `${vehicle.status || "Unknown"}` +
-
-                        `<br>Speed: ` +
-
-                        `${vehicle.speed ?? "N/A"} km/h` +
-
-                        `<br>Heading: ` +
-
-                        `${vehicle.heading ?? "N/A"}` +
-
-                        `<br>Last update: ` +
-
-                        `${vehicle.updated_at || "N/A"}`
-
-                    );
-
-
-                vehicleMarkers.push(
-                    marker
-                );
-
-            }
-        );
-
-
-    }
-
-    catch (error) {
+    } catch (error) {
 
         console.error(
-            "Vehicle tracking error:",
+            "Status error:",
             error
         );
 
     }
-
 }
 
 
 // ==========================================
-// REFRESH VEHICLE DATA
+// VEHICLES
 // ==========================================
 
-loadVehicles();
+async function loadVehicles() {
+
+    try {
+
+        const response =
+            await fetch(
+                `${API_BASE}/vehicles`
+            );
 
 
-setInterval(
-    loadVehicles,
-    5000
-);
-
-
-// ==========================================
-// WHY THIS ROUTE
-// ==========================================
-
-const whyRoute =
-    document.getElementById(
-        "whyRoute"
-    );
-
-
-if (
-    whyRoute
-) {
-
-    whyRoute.addEventListener(
-        "click",
-        function() {
-
-            const explanation =
-                document.getElementById(
-                    "aiExplanation"
-                );
-
-
-            if (
-                explanation
-            ) {
-
-                explanation.classList.toggle(
-                    "hidden"
-                );
-
-            }
-
+        if (!response.ok) {
+            throw new Error(
+                "Vehicle service unavailable"
+            );
         }
-    );
-
-}
 
 
-// ==========================================
-// WHAT-IF SIMULATION
-// ==========================================
-
-const simulateButton =
-    document.getElementById(
-        "simulateBtn"
-    );
+        const data =
+            await response.json();
 
 
-if (
-    simulateButton
-) {
-
-    simulateButton.addEventListener(
-        "click",
-        function() {
-
-            const result =
-                document.getElementById(
-                    "simulationResult"
-                );
+        const vehicles =
+            data.vehicles || [];
 
 
-            if (
-                result
-            ) {
+        console.log(
+            "REAL VEHICLES:",
+            vehicles
+        );
 
-                result.classList.toggle(
-                    "hidden"
-                );
 
-            }
+        const active =
+            vehicles.filter(
+                vehicle =>
+                    vehicle.status === "active"
+            );
 
+
+        const delayed =
+            vehicles.filter(
+                vehicle =>
+                    vehicle.status === "delayed"
+            );
+
+
+        const activeElement =
+            document.getElementById(
+                "activeVehicles"
+            );
+
+
+        const delayedElement =
+            document.getElementById(
+                "delayedVehicles"
+            );
+
+
+        if (activeElement) {
+            activeElement.textContent =
+                active.length;
         }
-    );
 
+
+        if (delayedElement) {
+            delayedElement.textContent =
+                delayed.length;
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Vehicle error:",
+            error
+        );
+
+    }
 }
 
 
 // ==========================================
-// ANALYZE BUTTON
+// DASHBOARD START
 // ==========================================
 
-const analyzeButton =
-    document.getElementById(
-        "analyzeBtn"
-    );
+document.addEventListener(
+    "DOMContentLoaded",
+    function () {
 
+        initializeMap();
 
-if (
-    analyzeButton
-) {
+        loadSystemStatus();
 
-    analyzeButton.addEventListener(
-        "click",
-        calculateRoute
-    );
+        loadVehicles();
 
-}
-
-
-// ==========================================
-// INITIAL MAP
-// ==========================================
-
-console.log(
-    "RouteGuard AI Command Center loaded."
+    }
 );
-
-console.log(
-    "Backend:",
-    BACKEND_URL
-);
-
-console.log(
-    "Vehicle tracking:",
-    "GPS-ready"
-);
-
-console.log(
-    "Risk engine:",
-    "Rule-based v1"
-);s
