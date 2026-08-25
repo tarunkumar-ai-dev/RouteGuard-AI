@@ -710,6 +710,201 @@ def vehicle_risk(vehicle_id):
     })
 
 
+
+# ==============================
+# ROUTE WEATHER RISK
+# Samples live weather along the
+# actual OSRM route geometry.
+# ==============================
+
+def fetch_live_weather(latitude, longitude):
+
+    weather_url = (
+        "https://api.open-meteo.com/v1/forecast"
+        f"?latitude={latitude}"
+        f"&longitude={longitude}"
+        "&current="
+        "temperature_2m,"
+        "precipitation,"
+        "rain,"
+        "weather_code,"
+        "wind_speed_10m"
+        "&timezone=auto"
+    )
+
+    try:
+
+        response = requests.get(
+            weather_url,
+            timeout=10,
+            headers={
+                "User-Agent":
+                    "RouteGuardAI/1.0"
+            }
+        )
+
+        response.raise_for_status()
+
+        return response.json()
+
+    except requests.RequestException as error:
+
+        raise RuntimeError(
+            f"Live weather service unavailable: {error}"
+        )
+
+
+@app.route(
+    "/api/route-risk",
+    methods=["POST"]
+)
+def route_risk():
+
+    data = request.get_json(
+        silent=True
+    )
+
+    if not data:
+
+        return jsonify({
+            "error":
+                "JSON body required."
+        }), 400
+
+
+    route = data.get("route")
+
+    if not route:
+
+        return jsonify({
+            "error":
+                "Route data is required."
+        }), 400
+
+
+    geometry = route.get("geometry", {})
+
+
+    coordinates = geometry.get("coordinates", [])
+
+
+    if not coordinates:
+
+        return jsonify({
+            "error":
+                "Route geometry is required."
+        }), 400
+
+
+    # Sample start, middle and end
+    # of the real route.
+    sample_indexes = sorted(
+        set([
+            0,
+            len(coordinates) // 2,
+            len(coordinates) - 1
+        ])
+    )
+
+
+    weather_points = []
+    route_risks = []
+
+
+    for index in sample_indexes:
+
+        point = coordinates[index]
+
+
+        longitude = float(point[0])
+
+
+        latitude = float(point[1])
+
+
+        try:
+
+            weather_data = fetch_live_weather(latitude, longitude)
+
+
+            risk = calculate_weather_risk(weather_data)
+
+
+            weather_points.append({
+
+                "latitude":
+                    latitude,
+
+                "longitude":
+                    longitude,
+
+                "risk":
+                    risk
+
+            })
+
+
+            route_risks.append(
+                risk
+            )
+
+
+        except Exception as error:
+
+            return jsonify({
+
+                "error":
+                    "Unable to calculate live route weather risk.",
+
+                "details":
+                    str(error)
+
+            }), 502
+
+
+    # Conservative approach:
+    # use the highest risk found
+    # along the sampled route.
+    worst_risk = max(route_risks, key=lambda item: item["risk_score"])
+
+
+    return jsonify({
+
+        "success":
+            True,
+
+        "risk":
+            worst_risk,
+
+        "route":
+            {
+                "distance_km":
+                    route.get(
+                        "distance_km"
+                    ),
+
+                "duration_minutes":
+                    route.get(
+                        "duration_minutes"
+                    )
+            },
+
+        "weather_points":
+            weather_points,
+
+        "method":
+            "Live weather sampled at route start, midpoint and destination",
+
+        "data_source":
+            "Open-Meteo live weather",
+
+        "generated_at":
+            datetime.utcnow().isoformat()
+            + "Z"
+
+    })
+
+
 # ==============================
 # SYSTEM STATUS
 # ==============================
