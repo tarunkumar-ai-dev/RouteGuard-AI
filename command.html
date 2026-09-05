@@ -99,3 +99,279 @@
             letter-spacing: 1px;
             border-bottom: 1px solid #1c3043;
         }
+
+        .vehicle-table .table-row {
+            border-bottom: 1px solid #10202f;
+        }
+
+        .status-badge.active { color: #00d084; }
+        .status-badge.delayed { color: #ffb020; }
+
+        .empty-table {
+            padding: 16px 6px;
+            color: #7f92a6;
+            font-size: 12px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            margin-top: 14px;
+        }
+
+        .status-grid div {
+            font-size: 11px;
+            color: #b5c4d2;
+        }
+
+        .status-grid strong {
+            display: block;
+            margin-top: 4px;
+            font-size: 13px;
+            color: white;
+        }
+    </style>
+</head>
+
+
+<body>
+
+<div class="app">
+
+    <aside class="sidebar">
+
+        <div class="brand">
+            RouteGuard <span>AI</span>
+        </div>
+
+        <div class="ai-status">
+            <span></span>
+            AI ENGINE ONLINE
+        </div>
+
+        <nav>
+            <button class="nav-item active">🗺️ <span>Command Center</span></button>
+            <button class="nav-item">🚚 <span>Fleet Monitoring</span></button>
+            <button class="nav-item">🧠 <span>Risk Intelligence</span></button>
+            <button class="nav-item">⚡ <span>Route Optimization</span></button>
+            <button class="nav-item">🌧️ <span>Disaster Watch</span></button>
+        </nav>
+
+        <div class="sidebar-bottom">
+
+            <div class="mini-status">
+                <small>NETWORK STATUS</small>
+                <strong>All systems operational</strong>
+            </div>
+
+            <button class="logout">← Exit Command Center</button>
+
+        </div>
+
+    </aside>
+
+
+    <main class="main">
+
+        <header class="topbar">
+
+            <div>
+                <p class="eyebrow">LIVE LOGISTICS NETWORK</p>
+                <h1>AI Command Center</h1>
+            </div>
+
+            <div class="top-actions">
+
+                <div class="live"><span></span> LIVE</div>
+
+                <div class="operator">
+                    <div class="avatar">T</div>
+                    <div>
+                        <strong>Operator</strong>
+                        <small>Control Access</small>
+                    </div>
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <section class="stats">
+
+            <div class="stat-card">
+                <span>🚚</span>
+                <div>
+                    <small>Active Vehicles</small>
+                    <strong id="activeVehicles">0</strong>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <span>⏱️</span>
+                <div>
+                    <small>Delayed Vehicles</small>
+                    <strong id="delayedVehicles">0</strong>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <span>🗺️</span>
+                <div>
+                    <small>Routes Monitored</small>
+                    <strong>46</strong>
+                </div>
+            </div>
+
+            <div class="stat-card risk">
+                <span>⚠️</span>
+                <div>
+                    <small>Risk Alerts</small>
+                    <strong>07</strong>
+                </div>
+            </div>
+
+        </section>
+
+
+        <section class="route-search">
+
+            <div class="field">
+                <label>ORIGIN</label>
+                <input id="originInput" type="text" value="Delhi">
+            </div>
+
+            <div class="arrow">→</div>
+
+            <div class="field">
+                <label>DESTINATION</label>
+                <input id="destinationInput" type="text" value="Lucknow">
+            </div>
+
+            <button id="routeButton">🤖 ANALYZE REAL ROUTE →</button>
+
+        </section>
+
+
+        <section class="workspace">
+
+            <div class="map-panel">
+
+                <div class="panel-title">
+                    <div>
+                        <h2>Live Route Network</h2>
+                        <p>Real-time logistics monitoring</p>
+                    </div>
+                    <span class="map-live">● LIVE TRACKING</span>
+                </div>
+
+                <div id="realMap" class="map"></div>
+
+                <div id="mapLoading" class="map-loading">
+                    Finding real route...
+                </div>
+
+            </div>
+
+
+            <aside class="ai-panel">
+
+                <div class="ai-heading">
+                    <div>
+                        <p class="eyebrow">INTELLIGENCE ENGINE</p>
+                        <h2>AI Route Analysis</h2>
+                    </div>
+                    <div class="ai-icon">AI</div>
+                </div>
+
+                <div class="route-info-card">
+
+                    <div class="route-info-row">
+                        <div>
+                            <small>ORIGIN</small>
+                            <strong id="routeOrigin">—</strong>
+                        </div>
+                        <div>
+                            <small>DESTINATION</small>
+                            <strong id="routeDestination">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="route-info-row">
+                        <div>
+                            <small>DISTANCE</small>
+                            <strong id="routeDistance">—</strong>
+                        </div>
+                        <div>
+                            <small>DURATION</small>
+                            <strong id="routeDuration">—</strong>
+                        </div>
+                    </div>
+
+                    <div class="route-info-row" id="routeRiskRow" style="display:none;">
+                        <div>
+                            <small>DISRUPTION RISK</small>
+                            <strong id="routeRiskScore">—</strong>
+                        </div>
+                        <div>
+                            <small>RISK LEVEL</small>
+                            <strong id="routeRiskLevel">—</strong>
+                        </div>
+                    </div>
+
+                    <div id="routeRiskReasons" style="font-size:11px; color:#7f92a6; margin-top:6px;"></div>
+
+                    <!-- alternateRoutes list JS yaha auto-inject karega -->
+
+                </div>
+
+            </aside>
+
+        </section>
+
+
+        <section class="vehicles-section">
+
+            <div class="panel-title">
+                <div>
+                    <h2>Live Fleet</h2>
+                    <p>Real GPS-tracked vehicles</p>
+                </div>
+            </div>
+
+            <div class="vehicle-table">
+
+                <div class="table-header">
+                    <span>VEHICLE</span>
+                    <span>GPS</span>
+                    <span>STATUS</span>
+                    <span>UPDATED</span>
+                </div>
+
+                <div id="vehicleRows">
+                    <div class="empty-table">Loading vehicles...</div>
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="system-status-section">
+
+            <div class="panel-title">
+                <div>
+                    <h2>System Status</h2>
+                    <p>Live backend health</p>
+                </div>
+            </div>
+
+            <div class="status-grid">
+
+                <div>Backend <strong id="backendStatus">Checking...</strong></div>
+                <div>System <strong id="systemOnline">Checking...</strong></div>
+                <div>Weather API <strong id="weatherStatus">Checking...</strong></div>
+                <div>Vehicle Tracking <strong id="vehicleStatus">Checking...</strong></div>
+                <div>Risk Engine <strong id="riskStatus">Checking...</strong></div>
+                <div>Routing Engine
