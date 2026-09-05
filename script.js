@@ -103,6 +103,6 @@ authForm.addEventListener("submit", (event) => {
 
     // Open Dashboard
 
-    window.location.href = "dashboard.html";
+    window.location.href = "mission.html";
 
 });
