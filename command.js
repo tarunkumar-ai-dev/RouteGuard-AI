@@ -125,7 +125,7 @@ async function loadRealRoute(
         }
 
 
-                currentRouteData = data;
+        currentRouteData = data;
 
         loadRouteRisk(data.routes[0]);   // ADD THIS LINE
 
@@ -705,7 +705,8 @@ function selectRoute(
         }
     );
 
-
+    loadRouteRisk(selectedRoute);
+    
     console.log(
         "Selected real route:",
         selectedRoute
