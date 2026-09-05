@@ -1474,3 +1474,19 @@ setInterval(
     },
     30000
 );
+
+// ==========================================
+// LOGOUT
+// ==========================================
+
+const logoutBtn = document.querySelector(".logout");
+
+if (logoutBtn) {
+
+    logoutBtn.addEventListener("click", () => {
+
+        window.location.href = "index.html";
+
+    });
+
+}
