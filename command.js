@@ -125,7 +125,9 @@ async function loadRealRoute(
         }
 
 
-        currentRouteData = data;
+                currentRouteData = data;
+
+        loadRouteRisk(data.routes[0]);   // ADD THIS LINE
 
 
         drawAllRoutes(data);
