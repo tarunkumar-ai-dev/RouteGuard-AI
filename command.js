@@ -1492,3 +1492,43 @@ if (logoutBtn) {
     });
 
 }
+// ==========================================
+// ROUTE RISK
+// ==========================================
+
+async function loadRouteRisk(route) {
+
+    const riskRow = document.getElementById("routeRiskRow");
+    const scoreEl = document.getElementById("routeRiskScore");
+    const levelEl = document.getElementById("routeRiskLevel");
+    const reasonsEl = document.getElementById("routeRiskReasons");
+
+    try {
+
+        const response = await fetch(`${API_BASE}/route-risk`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ route: route })
+        });
+
+        if (!response.ok) {
+            throw new Error("Route risk unavailable.");
+        }
+
+        const data = await response.json();
+        const risk = data.risk;
+
+        if (riskRow) riskRow.style.display = "flex";
+        if (scoreEl) scoreEl.textContent = `${risk.risk_score}%`;
+        if (levelEl) levelEl.textContent = risk.risk_level;
+        if (reasonsEl) reasonsEl.textContent = risk.reasons.join(", ");
+
+    } catch (error) {
+
+        console.error("Route risk error:", error);
+
+        if (riskRow) riskRow.style.display = "none";
+
+    }
+
+}
