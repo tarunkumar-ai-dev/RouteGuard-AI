@@ -12,6 +12,8 @@ let routeLayers = [];
 let vehicleMarkers = {};
 
 let currentRouteData = null;
+let routesAnalyzedCount = 0;
+let riskAlertsCount = 0;
 
 
 // ==========================================
@@ -129,6 +131,17 @@ async function loadRealRoute(
 
         loadRouteRisk(data.routes[0]);   // ADD THIS LINE
 
+                currentRouteData = data;
+
+        routesAnalyzedCount++;
+        const routesMonitoredEl = document.getElementById("routesMonitored");
+        if (routesMonitoredEl) routesMonitoredEl.textContent = routesAnalyzedCount;
+
+        loadRouteRisk(data.routes[0]);
+
+
+        drawAllRoutes(data);
+
 
         drawAllRoutes(data);
 
@@ -159,6 +172,7 @@ async function loadRealRoute(
     }
 
 }
+
 
 
 // ==========================================
@@ -1502,6 +1516,13 @@ async function loadRouteRisk(route) {
     const riskRow = document.getElementById("routeRiskRow");
     const scoreEl = document.getElementById("routeRiskScore");
     const levelEl = document.getElementById("routeRiskLevel");
+            if (levelEl) levelEl.textContent = risk.risk_level;
+
+        if (risk.risk_level === "HIGH" || risk.risk_level === "MEDIUM") {
+            riskAlertsCount++;
+            const riskAlertsEl = document.getElementById("riskAlerts");
+            if (riskAlertsEl) riskAlertsEl.textContent = riskAlertsCount;
+        }
     const reasonsEl = document.getElementById("routeRiskReasons");
 
     try {
