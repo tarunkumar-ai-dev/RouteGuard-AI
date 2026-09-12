@@ -318,6 +318,20 @@ function selectRoute(selectedIndex) {
 
     }
 
+    const fuelElement = document.getElementById("routeFuelCost");
+
+    if (fuelElement) {
+
+        const TRUCK_MILEAGE_KMPL = 4;
+        const DIESEL_PRICE_PER_LITRE = 95.20;
+
+        const litres = firstRoute.distance_km / TRUCK_MILEAGE_KMPL;
+        const cost = Math.round(litres * DIESEL_PRICE_PER_LITRE);
+
+        fuelElement.textContent = `₹${cost.toLocaleString("en-IN")} (${litres.toFixed(1)} L @ ₹${DIESEL_PRICE_PER_LITRE}/L)`;
+
+    }
+    
     routeLayers.forEach((layer, index) => {
         layer.setStyle({
             weight: index === selectedIndex ? 7 : 3,
