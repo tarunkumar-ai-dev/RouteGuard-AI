@@ -283,4 +283,490 @@ function selectRoute(selectedIndex) {
     const selectedRoute = currentRouteData.routes[selectedIndex];
 
     document.querySelectorAll(".alternate-route").forEach((button, index) => {
-        button.classList.toggle("selected", index
+        button.classList.toggle("selected", index === selectedIndex);
+    });
+
+    const distance = document.getElementById("routeDistance");
+    const duration = document.getElementById("routeDuration");
+    const smallDistance = document.getElementById("routeDistanceSmall");
+    const smallDuration = document.getElementById("routeDurationSmall");
+
+    if (distance) distance.textContent = `${selectedRoute.distance_km} km`;
+    if (duration) duration.textContent = formatDuration(selectedRoute.duration_minutes);
+    if (smallDistance) smallDistance.textContent = `${selectedRoute.distance_km} km`;
+    if (smallDuration) smallDuration.textContent = formatDuration(selectedRoute.duration_minutes);
+
+    routeLayers.forEach((layer, index) => {
+        layer.setStyle({
+            weight: index === selectedIndex ? 7 : 3,
+            opacity: index === selectedIndex ? 1 : 0.35
+        });
+    });
+
+    loadRouteRisk(selectedRoute);
+
+    console.log("Selected real route:", selectedRoute);
+
+}
+
+
+// ==========================================
+// REAL VEHICLES
+// ==========================================
+
+async function loadVehicles() {
+
+    try {
+
+        const response = await fetch(`${API_BASE}/vehicles`);
+
+        if (!response.ok) {
+            throw new Error("Vehicle API unavailable.");
+        }
+
+        const data = await response.json();
+        const vehicles = data.vehicles || [];
+
+        updateVehicleStats(vehicles);
+        updateVehicleTable(vehicles);
+        updateVehicleMarkers(vehicles);
+
+    } catch (error) {
+
+        console.error("Vehicle error:", error);
+
+    }
+
+}
+
+
+// ==========================================
+// VEHICLE STATS
+// ==========================================
+
+function updateVehicleStats(vehicles) {
+
+    const active = vehicles.filter(vehicle => vehicle.status === "active");
+    const delayed = vehicles.filter(vehicle => vehicle.status === "delayed");
+
+    const activeElement = document.getElementById("activeVehicles");
+    const delayedElement = document.getElementById("delayedVehicles");
+
+    if (activeElement) activeElement.textContent = active.length;
+    if (delayedElement) delayedElement.textContent = delayed.length;
+
+}
+
+
+// ==========================================
+// VEHICLE TABLE
+// ==========================================
+
+function updateVehicleTable(vehicles) {
+
+    const container = document.getElementById("vehicleRows");
+
+    if (!container) return;
+
+    if (vehicles.length === 0) {
+        container.innerHTML = `<div class="empty-table">No live vehicles registered.</div>`;
+        return;
+    }
+
+    container.innerHTML = "";
+
+    vehicles.forEach(vehicle => {
+
+        const row = document.createElement("div");
+        row.className = "table-row";
+
+        const status = vehicle.status || "unknown";
+
+        row.innerHTML = `
+            <span><strong>${escapeHtml(vehicle.vehicle_id)}</strong></span>
+            <span>${Number(vehicle.latitude).toFixed(5)}, ${Number(vehicle.longitude).toFixed(5)}</span>
+            <span class="status-badge ${status === "active" ? "active" : "delayed"}">● ${escapeHtml(status)}</span>
+            <span>${formatUpdatedAt(vehicle.updated_at)}</span>
+        `;
+
+        container.appendChild(row);
+
+    });
+
+}
+
+
+// ==========================================
+// REAL GPS MARKERS
+// ==========================================
+
+function updateVehicleMarkers(vehicles) {
+
+    if (!map) return;
+
+    const activeIds = new Set();
+
+    vehicles.forEach(vehicle => {
+
+        if (vehicle.latitude === undefined || vehicle.longitude === undefined) {
+            return;
+        }
+
+        const id = String(vehicle.vehicle_id);
+        activeIds.add(id);
+
+        const lat = Number(vehicle.latitude);
+        const lon = Number(vehicle.longitude);
+
+        if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
+            return;
+        }
+
+        const popup = `
+            <strong>Vehicle ${escapeHtml(id)}</strong>
+            <br>Status: ${escapeHtml(vehicle.status || "unknown")}
+            <br>Speed: ${
+                vehicle.speed !== null && vehicle.speed !== undefined
+                    ? escapeHtml(String(vehicle.speed)) + " km/h"
+                    : "Not provided"
+            }
+            <br>Heading: ${
+                vehicle.heading !== null && vehicle.heading !== undefined
+                    ? escapeHtml(String(vehicle.heading)) + "°"
+                    : "Not provided"
+            }
+            <br>GPS: ${lat.toFixed(5)}, ${lon.toFixed(5)}
+        `;
+
+        if (vehicleMarkers[id]) {
+
+            vehicleMarkers[id].setLatLng([lat, lon]).setPopupContent(popup);
+
+        } else {
+
+            const marker = L.marker([lat, lon]).addTo(map).bindPopup(popup);
+            vehicleMarkers[id] = marker;
+
+        }
+
+    });
+
+    Object.keys(vehicleMarkers).forEach(id => {
+
+        if (!activeIds.has(id)) {
+            map.removeLayer(vehicleMarkers[id]);
+            delete vehicleMarkers[id];
+        }
+
+    });
+
+}
+
+
+// ==========================================
+// SYSTEM STATUS
+// ==========================================
+
+async function loadSystemStatus() {
+
+    try {
+
+        const response = await fetch(`${API_BASE}/status`);
+
+        if (!response.ok) {
+            throw new Error("Status unavailable.");
+        }
+
+        const data = await response.json();
+
+        const backend = document.getElementById("backendStatus");
+        const systemOnline = document.getElementById("systemOnline");
+        const weather = document.getElementById("weatherStatus");
+        const vehicle = document.getElementById("vehicleStatus");
+        const risk = document.getElementById("riskStatus");
+        const routing = document.getElementById("routingStatus");
+
+        if (backend) backend.textContent = data.backend === "online" ? "Online" : "Offline";
+        if (systemOnline) systemOnline.textContent = data.backend === "online" ? "ONLINE" : "OFFLINE";
+        if (weather) weather.textContent = data.weather_api || "Unavailable";
+        if (vehicle) vehicle.textContent = data.vehicle_tracking || "Unavailable";
+        if (risk) risk.textContent = data.risk_engine || "Unavailable";
+        if (routing) routing.textContent = data.routing_engine || "Unavailable";
+
+    } catch (error) {
+
+        console.error("System status error:", error);
+
+    }
+
+}
+
+
+// ==========================================
+// ROUTE BUTTON
+// ==========================================
+
+const routeButton = document.getElementById("routeButton");
+
+if (routeButton) {
+
+    routeButton.addEventListener("click", async () => {
+
+        const origin = document.getElementById("originInput")?.value.trim();
+        const destination = document.getElementById("destinationInput")?.value.trim();
+
+        if (!origin || !destination) {
+            alert("Please enter origin and destination.");
+            return;
+        }
+
+        routeButton.disabled = true;
+        routeButton.textContent = "CALCULATING REAL ROUTE...";
+
+        await loadRealRoute(origin, destination);
+
+        routeButton.disabled = false;
+        routeButton.textContent = "ANALYZE REAL ROUTE →";
+
+    });
+
+}
+
+
+// ==========================================
+// NAVIGATION
+// ==========================================
+
+document.querySelectorAll(".nav-item").forEach(item => {
+
+    item.addEventListener("click", function (event) {
+
+        event.preventDefault();
+
+        document.querySelectorAll(".nav-item").forEach(nav => {
+            nav.classList.remove("active");
+        });
+
+        this.classList.add("active");
+
+    });
+
+});
+
+
+// ==========================================
+// LOGOUT
+// ==========================================
+
+const logoutBtn = document.querySelector(".logout");
+
+if (logoutBtn) {
+
+    logoutBtn.addEventListener("click", () => {
+        window.location.href = "index.html";
+    });
+
+}
+
+
+// ==========================================
+// FORMAT DURATION
+// ==========================================
+
+function formatDuration(minutes) {
+
+    const total = Number(minutes);
+
+    if (!Number.isFinite(total)) {
+        return "—";
+    }
+
+    const hours = Math.floor(total / 60);
+    const mins = Math.round(total % 60);
+
+    if (hours === 0) {
+        return `${mins} min`;
+    }
+
+    return `${hours}h ${mins}m`;
+
+}
+
+
+// ==========================================
+// FORMAT UPDATED TIME
+// ==========================================
+
+function formatUpdatedAt(value) {
+
+    if (!value) {
+        return "—";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return "—";
+    }
+
+    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+
+}
+
+
+// ==========================================
+// HTML SAFETY
+// ==========================================
+
+function escapeHtml(value) {
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+
+}
+
+
+// ==========================================
+// ROUTE RISK
+// ==========================================
+
+async function loadRouteRisk(route) {
+
+    const riskRow = document.getElementById("routeRiskRow");
+    const scoreEl = document.getElementById("routeRiskScore");
+    const levelEl = document.getElementById("routeRiskLevel");
+    const reasonsEl = document.getElementById("routeRiskReasons");
+
+    try {
+
+        const response = await fetch(`${API_BASE}/route-risk`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ route: route })
+        });
+
+        if (!response.ok) {
+            throw new Error("Route risk unavailable.");
+        }
+
+        const data = await response.json();
+        const risk = data.risk;
+
+        if (riskRow) riskRow.style.display = "flex";
+        if (scoreEl) scoreEl.textContent = `${risk.risk_score}%`;
+        if (levelEl) levelEl.textContent = risk.risk_level;
+
+        if (risk.risk_level === "HIGH" || risk.risk_level === "MEDIUM") {
+            riskAlertsCount++;
+            const riskAlertsEl = document.getElementById("riskAlerts");
+            if (riskAlertsEl) riskAlertsEl.textContent = riskAlertsCount;
+        }
+
+        if (reasonsEl) reasonsEl.textContent = risk.reasons.join(", ");
+
+        updateAlerts(data.weather_points);
+
+    } catch (error) {
+
+        console.error("Route risk error:", error);
+
+        if (riskRow) riskRow.style.display = "none";
+
+    }
+
+}
+
+
+// ==========================================
+// LIVE ALERTS (REAL, ROUTE-SPECIFIC)
+// ==========================================
+
+function updateAlerts(weatherPoints) {
+
+    const alertList = document.getElementById("alertList");
+    const alertCount = document.getElementById("alertCount");
+
+    if (!alertList || !alertCount) return;
+
+    if (!weatherPoints || weatherPoints.length === 0) {
+        alertList.innerHTML = `<div class="alert"><div><p>Unable to load live alerts.</p></div></div>`;
+        alertCount.textContent = "0 ACTIVE";
+        return;
+    }
+
+    const labels = ["Near Origin", "Midpoint", "Near Destination"];
+
+    const activeAlerts = weatherPoints
+        .map((point, index) => ({ point, label: labels[index] || `Point ${index + 1}` }))
+        .filter(item => item.point.risk.risk_level !== "LOW");
+
+    alertCount.textContent = `${activeAlerts.length} ACTIVE`;
+
+    if (activeAlerts.length === 0) {
+
+        alertList.innerHTML = `
+            <div class="alert">
+                <span class="alert-icon">✅</span>
+                <div>
+                    <strong>No disruption detected</strong>
+                    <p>Live weather along this route is currently clear.</p>
+                </div>
+            </div>
+        `;
+
+        return;
+
+    }
+
+    alertList.innerHTML = "";
+
+    activeAlerts.forEach(item => {
+
+        const div = document.createElement("div");
+        div.className = "alert";
+
+        const severityClass = item.point.risk.risk_level === "HIGH" ? "high" : "medium";
+
+        div.innerHTML = `
+            <span class="alert-icon">🌧️</span>
+            <div>
+                <strong>${escapeHtml(item.point.risk.reasons.join(", "))}</strong>
+                <p>${escapeHtml(item.label)} · ${item.point.latitude.toFixed(3)}, ${item.point.longitude.toFixed(3)}</p>
+            </div>
+            <b class="${severityClass}">${item.point.risk.risk_level}</b>
+        `;
+
+        alertList.appendChild(div);
+
+    });
+
+}
+
+
+// ==========================================
+// START
+// ==========================================
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    initializeMap();
+    loadSystemStatus();
+    loadVehicles();
+
+});
+
+
+// ==========================================
+// REAL-TIME REFRESH
+// ==========================================
+
+setInterval(() => {
+
+    loadSystemStatus();
+    loadVehicles();
+
+}, 30000);
