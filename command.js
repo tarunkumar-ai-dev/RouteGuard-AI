@@ -174,6 +174,71 @@ async function loadRealRoute(
 }
 
 
+// ==========================================
+// LIVE ALERTS (REAL, ROUTE-SPECIFIC)
+// ==========================================
+
+function updateAlerts(weatherPoints) {
+
+    const alertList = document.getElementById("alertList");
+    const alertCount = document.getElementById("alertCount");
+
+    if (!alertList || !alertCount) return;
+
+    if (!weatherPoints || weatherPoints.length === 0) {
+        alertList.innerHTML = `<div class="alert"><div><p>Unable to load live alerts.</p></div></div>`;
+        alertCount.textContent = "0 ACTIVE";
+        return;
+    }
+
+    const labels = ["Near Origin", "Midpoint", "Near Destination"];
+
+    const activeAlerts = weatherPoints
+        .map((point, index) => ({ point, label: labels[index] || `Point ${index + 1}` }))
+        .filter(item => item.point.risk.risk_level !== "LOW");
+
+    alertCount.textContent = `${activeAlerts.length} ACTIVE`;
+
+    if (activeAlerts.length === 0) {
+
+        alertList.innerHTML = `
+            <div class="alert">
+                <span class="alert-icon">✅</span>
+                <div>
+                    <strong>No disruption detected</strong>
+                    <p>Live weather along this route is currently clear.</p>
+                </div>
+            </div>
+        `;
+
+        return;
+    }
+
+    alertList.innerHTML = "";
+
+    activeAlerts.forEach(item => {
+
+        const div = document.createElement("div");
+        div.className = "alert";
+
+        const severityClass = item.point.risk.risk_level === "HIGH" ? "high" : "medium";
+
+        div.innerHTML = `
+            <span class="alert-icon">🌧️</span>
+            <div>
+                <strong>${escapeHtml(item.point.risk.reasons.join(", "))}</strong>
+                <p>${escapeHtml(item.label)} · ${item.point.latitude.toFixed(3)}, ${item.point.longitude.toFixed(3)}</p>
+            </div>
+            <b class="${severityClass}">${item.point.risk.risk_level}</b>
+        `;
+
+        alertList.appendChild(div);
+
+    });
+
+}
+
+
 
 // ==========================================
 // DRAW ALL REAL ROUTES
