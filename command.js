@@ -210,6 +210,17 @@ function updateRouteInformation(data) {
     if (originElement) originElement.textContent = data.origin.query;
     if (destinationElement) destinationElement.textContent = data.destination.query;
 
+    const fastestDuration = Math.min(...data.routes.map(r => r.duration_minutes));
+    const delayElement = document.getElementById("routeDelay");
+
+    if (delayElement) {
+
+        const delay = Math.round(firstRoute.duration_minutes - fastestDuration);
+
+        delayElement.textContent = delay > 0 ? `+${delay} min vs fastest` : "Fastest route";
+
+    }
+
     createAlternateRoutes(data.routes);
 
 }
@@ -295,6 +306,17 @@ function selectRoute(selectedIndex) {
     if (duration) duration.textContent = formatDuration(selectedRoute.duration_minutes);
     if (smallDistance) smallDistance.textContent = `${selectedRoute.distance_km} km`;
     if (smallDuration) smallDuration.textContent = formatDuration(selectedRoute.duration_minutes);
+
+    const fastestDuration = Math.min(...currentRouteData.routes.map(r => r.duration_minutes));
+    const delayElement = document.getElementById("routeDelay");
+
+    if (delayElement) {
+
+        const delay = Math.round(selectedRoute.duration_minutes - fastestDuration);
+
+        delayElement.textContent = delay > 0 ? `+${delay} min vs fastest` : "Fastest route";
+
+    }
 
     routeLayers.forEach((layer, index) => {
         layer.setStyle({
